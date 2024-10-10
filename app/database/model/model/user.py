@@ -1,6 +1,6 @@
 from config import Base
 from sqlalchemy.orm import relationship
-from app.database.model.model.book import Book
+from app.database.model.book import Book
 from sqlalchemy import (
     Column,
     Integer,
@@ -16,7 +16,6 @@ class User(Base):
     user_name = Column(Unicode(255), nullable=False)
     email = Column(Unicode(255), nullable=False)
     password = Column(Unicode(255), nullable=False)
-    token = Column(Unicode(255), nullable=False)
 
     def __repr__(self):
         return "{0} {1}".format(self.user_name, self.email)

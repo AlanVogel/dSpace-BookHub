@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (
@@ -5,7 +7,8 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-engine = create_engine("postgresql+psycopg2://postgres:admin@localhost:5432/dSpace BookHub")
+load_dotenv()
+engine = create_engine(os.getenv("DATABASE_URI"))
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
