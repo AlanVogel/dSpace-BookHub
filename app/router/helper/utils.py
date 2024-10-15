@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from dotenv import load_dotenv
-from error_msg import get_credential_exception
+from .router_msg import error_exception
 from database.schemas.token import TokenData
 from database.schemas.user import UserInDB
 from database.model.user import User
@@ -40,7 +40,7 @@ def authenticate_user(db, username: str, password: str):
     if not verify_password(password, user.hashed_password):
         return False
     
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta or None = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -52,9 +52,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_sceme)):
-    credential_exception = get_credential_exception(status_code=status.HTTP_401_UNAUTHORIZED,
-                                                    details = "Could not validate credentials",
-                                                    headers = {"WWW-Authenticate": "Bearer"})
+    credential_exception = error_exception(status_code=status.HTTP_401_UNAUTHORIZED,
+                                           details = "Could not validate credentials",
+                                           headers = {"WWW-Authenticate": "Bearer"})
     try:
         payload = jwt.decode(token, os.getenv("SECRET_KEY"),algorithms = [os.getenv("ALGORITHM")])
         user_name: str = payload.get("sub")
@@ -73,6 +73,6 @@ async def get_current_user(token: str = Depends(oauth2_sceme)):
 
 async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
     if current_user.disabled:
-        raise get_credential_exception(status_code = status.HTTP_400_BAD_REQUEST,
-                                       details = "Inactive user")
+        raise error_exception(status_code = status.HTTP_400_BAD_REQUEST,
+                              details = "Inactive user")
     return current_user

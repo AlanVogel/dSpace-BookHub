@@ -1,6 +1,6 @@
-from config import Base
+from database.config import Base
 from sqlalchemy.orm import relationship
-from app.database.model.book import Book
+from database.model.book import Book
 from sqlalchemy import (
     Column,
     Integer,

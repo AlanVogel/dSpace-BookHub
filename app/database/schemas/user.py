@@ -17,18 +17,30 @@ class UserRole(Enum):
 
 class User(BaseModel):
     user_name: str
-    disabled: bool | None = None
+    disabled: bool or None = None
+
+    class Config:
+        from_attributes = True
 
 class UserInDB(User):
     hashed_password: str
+
+    class Config:
+        from_attributes = True
 
 class Login(BaseModel):
     email: EmailStr = Field(pattern=r".+@dspace\.hr$")
     password: str = Field(min_length=6, pattern=r"\d.*[A-Z]|[A-Z].*\d")
 
+    class Config:
+        from_attributes = True
+
 class RegisterUser(User, Login):
     confirm_password: str = Field(min_length=6, pattern=r"\d.*[A-Z]|[A-Z].*\d")
     role_type: UserRole
+
+    class Config:
+        from_attributes = True
 
     @field_validator("email")
     @classmethod

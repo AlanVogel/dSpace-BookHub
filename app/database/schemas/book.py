@@ -7,3 +7,7 @@ class Book(BaseModel):
     category: str
     link: str
     quantity: int
+
+    class Config:
+        from_attributes = True
+        
