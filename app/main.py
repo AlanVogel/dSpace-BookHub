@@ -1,7 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 from router import user
+from database.config import ini_db, drop_db
 
+drop_db()
+ini_db()
 app = FastAPI()
 app.include_router(user.router)
 

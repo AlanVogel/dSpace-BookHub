@@ -1,4 +1,3 @@
-from enum import Enum
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -10,14 +9,11 @@ from email_validator import (
     validate_email,
     EmailNotValidError,
 )
-
-class UserRole(Enum):
-    ADMIN = "ADMIN"
-    EMPLOYEE = "EMPLOYEE"
+from ..model.user import UserRole
 
 class User(BaseModel):
     user_name: str
-    disabled: bool or None = None
+    disabled: bool or None = True
 
     class Config:
         from_attributes = True
@@ -37,7 +33,7 @@ class Login(BaseModel):
 
 class RegisterUser(User, Login):
     confirm_password: str = Field(min_length=6, pattern=r"\d.*[A-Z]|[A-Z].*\d")
-    role_type: UserRole
+    role_type: UserRole = UserRole.EMPLOYEE
 
     class Config:
         from_attributes = True
@@ -46,13 +42,13 @@ class RegisterUser(User, Login):
     @classmethod
     def is_email_valid(cls, email):
         try:
-            return validate_email(email)
+            return validate_email(email, test_environment=True)
         except EmailNotValidError as e:
-            raise ValueError(f"{email} is not valid emaild: {e}")
+            raise ValueError(f"{email} is not valid email: {e}")
     
     @model_validator(mode="after")
     @classmethod
     def check_password_match(cls, values):
-        if values.get("password") != values.get("confirm_password"):
+        if values.password != values.confirm_password:
             raise ValueError("Password and confirm password don't match!")
         return values

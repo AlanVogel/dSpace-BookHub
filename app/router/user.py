@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 from fastapi import (
     Depends, 
     status,
-    APIRouter,
-    Request
+    APIRouter
 )
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
+from database.schemas.helper.utils import validation_check
 from database.schemas.token import Token
 from database.schemas.user import RegisterUser
 from database.model.user import User
@@ -19,28 +19,36 @@ from .helper.router_msg import (
 )
 from .helper.utils import (
     authenticate_user, 
-    create_access_token,
+    create_access_token
 )
 
 load_dotenv()
 router = APIRouter()
 
-@router.post("/registration")
-def registration(user_data: RegisterUser, db = Depends(get_db)):
-    user = UserProvider.get_user_by_email(email= user_data.email, db = db)
+@router.post("/signup")
+def signup(form_data: RegisterUser = Depends(), db = Depends(get_db)):
+    #validation_check(data=form_data, checker=RegisterUser)
+    user = UserProvider.get_user_by_email(db = db, email= form_data.email["email"])
     if user:
         return error_exception(
             status_code = status.HTTP_409_CONFLICT,
-            details = "Email already exist",
+            details = "Account already exist",
             headers = {"WWW-Authenticate":"Bearer"}
         )
-    UserProvider.add_user(data = user, db = db)
+    UserProvider.add_user(db = db, data = form_data)
+    access_token_expire = timedelta(minutes=os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    #:TODO: check if user is superuser and add role type
+    access_token = create_access_token(
+        data = {"sub": user.email}, expires_delta= access_token_expire
+    ) 
+    #:TODO: add {"permissions": permission} inside the user info
     return ok_response(status_code = status.HTTP_201_CREATED,
                        details = "Account successfully created",
-                       **{"User_info": {"Username": user.user_name, "Email": user.email}})
+                       **{"User_info": {"Username": user.user_name, "Email": user.email,
+                                        "access_token": access_token, "token_type": "bearer"}})
 
 @router.post("/login", response_model = Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     credential_exception = error_exception(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail = "Incorret username or password",

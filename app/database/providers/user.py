@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from database.model.user import User
+from router.helper.utils import get_password_hash
 
 class UserProvider:
     
@@ -23,9 +24,11 @@ class UserProvider:
     
     @classmethod
     def add_user(cls, data: dict, db: Session):
-        new_user = User(user_name = data.get("username"), 
-                        password = data.get("password"),
-                        email = data.get("email"))
+        new_user = User(user_name = data.user_name, 
+                        hashed_password = get_password_hash(data.password),
+                        email = data.email["email"],
+                        disabled = data.disabled,
+                        is_superuser = data.role_type)
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
