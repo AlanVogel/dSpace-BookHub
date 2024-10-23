@@ -9,17 +9,23 @@ from email_validator import (
     validate_email,
     EmailNotValidError,
 )
-from ..model.user import UserRole
+
 
 class User(BaseModel):
     user_name: str
-    disabled: bool or None = True
+    is_active: bool or None = True
 
     class Config:
         from_attributes = True
 
+class UserEdit(BaseModel):
+    user_name: str
+    password: str
+    is_superuser: bool = False
+
 class UserInDB(User):
     hashed_password: str
+    is_superuser: bool
 
     class Config:
         from_attributes = True
@@ -33,7 +39,7 @@ class Login(BaseModel):
 
 class RegisterUser(User, Login):
     confirm_password: str = Field(min_length=6, pattern=r"\d.*[A-Z]|[A-Z].*\d")
-    role_type: UserRole = UserRole.EMPLOYEE
+    is_superuser: bool = False
 
     class Config:
         from_attributes = True

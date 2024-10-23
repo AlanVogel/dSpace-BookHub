@@ -1,35 +1,65 @@
-from fastapi import Depends
+from fastapi import status
 from sqlalchemy.orm import Session
+from database.schemas import user
 from database.model.user import User
 from router.helper.utils import get_password_hash
+from router.helper.router_msg import error_exception
 
 class UserProvider:
     
     @classmethod
-    def get_user_by_id(cls, user_id: int):
-        return User.query.filter(User.id == user_id).first()
+    def get_user_by_id(cls, user_id: int, db: Session):
+        return db.query(User).filter(User.id == user_id).first()
 
     @classmethod
-    def get_user_by_name(cls, name: str):
-        return User.query.filter(User.user_name == name).first()
+    def get_user_by_username(cls, username: str, db: Session):
+        return db.query(User).filter(User.user_name == username).first()
     
     @classmethod
     def get_user_by_email(cls, email: str, db: Session):
         return db.query(User).filter(User.email == email).first()
+    
+    @classmethod
+    def update_user_by_id(cls, user_id: int, db: Session, user: user.UserEdit):
+        db_user = cls.get_user_by_id(user_id = user_id, db = db)
+        if not db_user:
+            raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                                  details = "User not found",
+                                  headers = {"WWW-Authenticate":"Bearer"})
+        update_data = user.model_dump(exclude_unset=True)
+
+        if "password" in update_data:
+            update_data["hashed_password"] = get_password_hash(user.password)
+            del update_data["password"]
+        
+        for key, value in update_data.items():
+            setattr(db_user, key, value)
+        
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
 
     @classmethod
-    def delete_user_by_email(cls,  email: str):
-        user = User.query.filter(User.email == email).first()
-        return User.delete(user) 
-    
+    def delete_user_by_id(cls,  user_id: int, db: Session):
+        db_user = cls.get_user_by_id(user_id = user_id, db = db)
+        if not db_user:
+            raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                                  details = "User not found",
+                                  headers = {"WWW-Authenticate":"Bearer"})
+        db.delete(db_user)
+        db.commit()
+        return db_user
+         
     @classmethod
     def add_user(cls, data: dict, db: Session):
         new_user = User(user_name = data.user_name, 
                         hashed_password = get_password_hash(data.password),
                         email = data.email["email"],
-                        disabled = data.disabled,
-                        is_superuser = data.role_type)
+                        is_active = data.is_active,
+                        is_superuser = data.is_superuser)
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+        return new_user
         

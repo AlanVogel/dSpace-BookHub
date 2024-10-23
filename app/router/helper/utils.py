@@ -7,6 +7,7 @@ from .router_msg import error_exception
 from database.schemas.token import TokenData
 from database.schemas.user import UserInDB
 from database.model.user import User
+from database.config import get_db
 from fastapi import (
     Depends,
     status
@@ -18,7 +19,7 @@ from datetime import (
 )
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_sceme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_sceme = OAuth2PasswordBearer(tokenUrl="/login")
 
 load_dotenv()
 
@@ -28,17 +29,22 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def get_user(db, username: str):
-    if username in db:
-        user_data = db[username]
+def get_user(provider, db, email: str):
+    user = provider.get_user_by_email(db = db, email = email)
+    if user:
+        user_data = {"user_name": user.user_name,
+                     "is_active": user.is_active,
+                     "hashed_password": user.hashed_password,
+                     "is_superuser": user.is_superuser}
         return UserInDB(**user_data)
 
-def authenticate_user(db, username: str, password: str):
-    user = get_user(db, username)
+def authenticate_user(provider, db, email: str, password: str):
+    user = get_user(provider, db, email)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
         return False
+    return user
     
 def create_access_token(data: dict, expires_delta: timedelta or None = None):
     to_encode = data.copy()
@@ -51,28 +57,38 @@ def create_access_token(data: dict, expires_delta: timedelta or None = None):
     encoded_jwt = jwt.encode(to_encode, os.getenv("SECRET_KEY"), algorithm = os.getenv("ALGORITHM"))
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_sceme)):
+async def get_current_user(token: str = Depends(oauth2_sceme), db = Depends(get_db)):
     credential_exception = error_exception(status_code=status.HTTP_401_UNAUTHORIZED,
                                            details = "Could not validate credentials",
                                            headers = {"WWW-Authenticate": "Bearer"})
     try:
         payload = jwt.decode(token, os.getenv("SECRET_KEY"),algorithms = [os.getenv("ALGORITHM")])
-        user_name: str = payload.get("sub")
-        if user_name is None:
+        email: str = payload.get("sub")
+        permission: str = payload.get("permission")
+        if email is None:
             raise credential_exception
-        token_data = TokenData(username = user_name)
+        token_data = TokenData(email = email, permission = permission)
 
     except JWTError:
         raise credential_exception
     
-    user = get_user(User, username = token_data.username)
+    user = get_user(provider = User, db = db, username = token_data.username)
     if user is None:
         raise credential_exception
     
     return user
 
 async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
-    if current_user.disabled:
+    if not current_user.is_active:
         raise error_exception(status_code = status.HTTP_400_BAD_REQUEST,
                               details = "Inactive user")
+    return current_user
+
+async def get_current_active_superuser(current_user: UserInDB = Depends(get_current_user)):
+    if not current_user.is_active:
+        raise error_exception(status_code = status.HTTP_400_BAD_REQUEST,
+                              details = "Inactive user")
+    if not current_user.is_superuser:
+        raise error_exception(status_code = status.HTTP_403_FORBIDDEN,
+                              details = "The user doesn't have enough privileges")
     return current_user

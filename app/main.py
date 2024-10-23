@@ -8,6 +8,7 @@ ini_db()
 app = FastAPI()
 app.include_router(user.router)
 
+#:TODO: check CORS for middleware
 """ @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
     request.state.db = db_session

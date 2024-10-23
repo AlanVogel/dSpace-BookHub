@@ -1,5 +1,3 @@
-import enum
-from sqlalchemy import Enum
 from database.config import Base
 from sqlalchemy.orm import relationship
 from database.model.book import Book
@@ -11,9 +9,6 @@ from sqlalchemy import (
     Boolean,
 )
 
-class UserRole(enum.Enum):
-    ADMIN = "ADMIN"
-    EMPLOYEE = "EMPLOYEE"
 
 class User(Base):
     __tablename__ = "user"
@@ -22,8 +17,8 @@ class User(Base):
     user_name = Column(Unicode(255), nullable=False)
     email = Column(Unicode(255), nullable=False)
     hashed_password = Column(Unicode(255), nullable=False)
-    disabled = Column(Boolean, default=True)
-    is_superuser = Column(Enum(UserRole), default=UserRole.EMPLOYEE)
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
 
     def __repr__(self):
         return "{0} {1}".format(self.user_name, self.email)

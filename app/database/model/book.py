@@ -35,7 +35,8 @@ class Status(Base):
     #TODO: check what is better to use timestamp or Column(DateTime, nullable=True/False, default=now())
     time_taken = Column(TIMESTAMP(timezone=True), nullable=True)
     time_returned = Column(TIMESTAMP(timezone=True), nullable=True)
-    location= Column(Unicode(255), nullable=True)
+    location_taken= Column(Unicode(255), nullable=False)
+    location_returned = Column(Unicode(255), nullable=False)
 
     def __repr__(self):
         return "{0}".format(self.borrowed)

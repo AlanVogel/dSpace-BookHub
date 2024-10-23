@@ -17,7 +17,7 @@ def ok_response(status_code: int, details: str, **additional_data):
 
     for key, value in additional_data.items():
         data["{0}".format(key)] = value
-    return {"info": {"data": data}, "status_code": status_code}
+    return {"status_code": status_code, "info": {"data": data}}
 
 def now() -> datetime:
     return datetime.now()
