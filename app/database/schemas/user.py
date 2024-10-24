@@ -24,6 +24,7 @@ class UserEdit(BaseModel):
     is_superuser: bool = False
 
 class UserInDB(User):
+    email: EmailStr
     hashed_password: str
     is_superuser: bool
 

@@ -46,20 +46,17 @@ def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)), db 
     # the registration is done (permission with access_token should also be deleted)
     access_token_expire = timedelta(minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
     access_token = create_access_token(
-        data = {"sub": new_user.user_name, "permission": permission},
+        data = {"sub": new_user.email, "permission": permission},
                 expires_delta= access_token_expire)
     return ok_response(status_code = status.HTTP_201_CREATED,
                        details = "Account successfully created",
-                       **{"User_info": {"Username": new_user.user_name, "Email": new_user.email,
-                                        "permission": permission,
-                                        "access_token": access_token, "token_type": "bearer"}})
+                       **{"User_info": {"Username": new_user.user_name, "Email": new_user.email}})
 
 @router.post("/login")
 async def login(db = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
                 ) -> Token:
     #:TODO: need to add error catch depending if user exist or it is a wrong password
-    user = authenticate_user(provider= UserProvider, db= db, email= form_data.username, 
-                             password= form_data.password)
+    user = authenticate_user(db= db, email= form_data.username, password= form_data.password)
     if not user:
         return error_exception(
             status_code = status.HTTP_401_UNAUTHORIZED,
@@ -71,7 +68,7 @@ async def login(db = Depends(get_db), form_data: OAuth2PasswordRequestForm = Dep
         permission = "employee"
     access_token_expires = timedelta(minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
     access_token = create_access_token(
-        data = {"sub": user.user_name, "permission": permission}, 
+        data = {"sub": user.email, "permission": permission}, 
                 expires_delta = access_token_expires)
     return Token(access_token = access_token, token_type = "bearer")
 
@@ -85,15 +82,23 @@ async def user_details(user_id: int, current_user = Depends(get_current_active_s
             details = "User doesn't exist",
             headers = {"WWW-Authenticate":"Bearer"}
         )
-    return current_user
-
+    return user
+#:TODO: add request so we can update something
 @router.put("/update_user/{user_id}")
 async def update_used_account(user_id: int, current_user = Depends(get_current_active_superuser),
                               db = Depends(get_db)):
-    return UserProvider.update_user_by_id(user_id = user_id, db = db, schema = UserEdit)
+    updated_user = UserProvider.update_user_by_id(user_id = user_id, db = db, schema = UserEdit)
+    return ok_response(status_code= status.HTTP_200_OK,
+                       details = "User account has been updated",
+                       **{"updated_user": updated_user.user_name,
+                          "updated_by": current_user.email})
     
 
 @router.delete("/delete_user/{user_id}")
 async def delete_unused_account(user_id: int, current_user = Depends(get_current_active_superuser),
                                 db = Depends(get_db)):
-    return UserProvider.delete_user_by_id(user_id = user_id, db = db)
+    deleted_user = UserProvider.delete_user_by_id(user_id = user_id, db = db)
+    return ok_response(status_code= status.HTTP_200_OK,
+                       details= "User has been deleted",
+                       **{"deleted_user": deleted_user.user_name,
+                          "deleted_by": current_user.email})

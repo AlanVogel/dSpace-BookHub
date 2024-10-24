@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from .router_msg import error_exception
 from database.schemas.token import TokenData
 from database.schemas.user import UserInDB
-from database.model.user import User
+from database.providers import user as provider
 from database.config import get_db
 from fastapi import (
     Depends,
@@ -29,17 +29,18 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def get_user(provider, db, email: str):
-    user = provider.get_user_by_email(db = db, email = email)
+def get_user(db, email: str):
+    user = provider.UserProvider.get_user_by_email(db = db, email = email)
     if user:
         user_data = {"user_name": user.user_name,
                      "is_active": user.is_active,
+                     "email": user.email,
                      "hashed_password": user.hashed_password,
                      "is_superuser": user.is_superuser}
         return UserInDB(**user_data)
 
-def authenticate_user(provider, db, email: str, password: str):
-    user = get_user(provider, db, email)
+def authenticate_user(db, email: str, password: str):
+    user = get_user(db, email)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -71,8 +72,7 @@ async def get_current_user(token: str = Depends(oauth2_sceme), db = Depends(get_
 
     except JWTError:
         raise credential_exception
-    
-    user = get_user(provider = User, db = db, username = token_data.username)
+    user = get_user(db = db, email = token_data.email)
     if user is None:
         raise credential_exception
     
