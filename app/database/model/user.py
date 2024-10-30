@@ -1,12 +1,14 @@
 from database.config import Base
 from sqlalchemy.orm import relationship
-from database.model.book import Book
+from database.model.book import BookCopy
 from sqlalchemy import (
     Column,
     Integer,
     Unicode,
     ForeignKey,
     Boolean,
+    DateTime,
+    func
 )
 
 
@@ -20,30 +22,22 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
 
+    borrowed_books = relationship("UserBook", back_populates="user")
+
     def __repr__(self):
         return "{0} {1}".format(self.user_name, self.email)
-
-class Role(Base):
-    __tablename__ = "role"
-
-    id = Column(Integer, primary_key=True)
-    role_type = Column(Unicode(255), nullable=False)
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
-
-    user = relationship("User")
-
-    def __repr__(self):
-        return "{0}".format(self.role_name)
     
 class UserBook(Base):
     __tablename__ = "user_book"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
-    book_id = Column(Integer, ForeignKey("book.id", ondelete="CASCADE"))
+    book_copy_id = Column(Integer, ForeignKey("book_copy.id", ondelete="CASCADE"))
+    time_taken = Column(DateTime(timezone=True), default=func.now())
+    time_returned = Column(DateTime(timezone=True), nullable=True)
 
-    user = relationship("User")
-    book = relationship("Book")
+    user = relationship("User", back_populates="borrowed_books")
+    book_copy = relationship("BookCopy", back_populates= "borrow_logs")
 
     def __repr__(self):
-        return "{0} {1}".format(self.user_id, self.book_id)
+        return "{0} {1}".format(self.user_id, self.book_copy_id)

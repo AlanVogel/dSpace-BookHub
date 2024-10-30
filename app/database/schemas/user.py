@@ -1,3 +1,4 @@
+import typing as t
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -19,9 +20,12 @@ class User(BaseModel):
         from_attributes = True
 
 class UserEdit(BaseModel):
-    user_name: str
-    password: str
-    is_superuser: bool = False
+    user_name: t.Optional[str]  = None
+    password: t.Optional[str] = None
+    is_superuser: t.Optional[bool] = False
+
+    class Config:
+        from_attributes = True
 
 class UserInDB(User):
     email: EmailStr

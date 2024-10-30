@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from fastapi import (
     Depends, 
     status,
-    APIRouter
+    APIRouter,
+    Request
 )
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
@@ -27,15 +28,23 @@ router = APIRouter()
 
 #:TODO: response_model=Token? same for login
 @router.post("/signup")
-def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)), db = Depends(get_db)):
-    user = UserProvider.get_user_by_email(db = db, email= form_data.email["email"])
+def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)), 
+           db = Depends(get_db)):
+    user = UserProvider.get_user_by_email(db = db, 
+                                          email= form_data.email["email"])
     if user:
         return error_exception(
             status_code = status.HTTP_409_CONFLICT,
             details = "Account already exist",
             headers = {"WWW-Authenticate":"Bearer"}
         )
-    #:TODO: make sure there's no duplicate username!! check the code above and throw error exc 
+    if user.user_name == form_data.user_name:
+        return error_exception(
+            status_code= status.HTTP_409_CONFLICT,
+            details= "Name already taken",
+            headers= {"WWW-Authenticate":"Bearer"}
+        )
+
     new_user = UserProvider.add_user(db = db, data = form_data)
     if new_user.is_superuser:
         permission = "admin"
@@ -50,13 +59,15 @@ def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)), db 
                 expires_delta= access_token_expire)
     return ok_response(status_code = status.HTTP_201_CREATED,
                        details = "Account successfully created",
-                       **{"User_info": {"Username": new_user.user_name, "Email": new_user.email}})
+                       **{"User_info": {"Username": new_user.user_name, 
+                                        "Email": new_user.email}})
 
 @router.post("/login")
-async def login(db = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
-                ) -> Token:
+async def login(db = Depends(get_db), 
+                form_data: OAuth2PasswordRequestForm = Depends()) -> Token:
     #:TODO: need to add error catch depending if user exist or it is a wrong password
-    user = authenticate_user(db= db, email= form_data.username, password= form_data.password)
+    user = authenticate_user(db= db, email= form_data.username, 
+                             password= form_data.password)
     if not user:
         return error_exception(
             status_code = status.HTTP_401_UNAUTHORIZED,
@@ -73,8 +84,8 @@ async def login(db = Depends(get_db), form_data: OAuth2PasswordRequestForm = Dep
     return Token(access_token = access_token, token_type = "bearer")
 
 @router.get("/get_user/{user_id}")
-async def user_details(user_id: int, current_user = Depends(get_current_active_superuser),
-                       db = Depends(get_db)):
+async def user_details(user_id: int, db = Depends(get_db),
+                       current_user = Depends(get_current_active_superuser)):
     user = UserProvider.get_user_by_id(user_id = user_id, db = db)
     if not user:
         return error_exception(
@@ -83,11 +94,13 @@ async def user_details(user_id: int, current_user = Depends(get_current_active_s
             headers = {"WWW-Authenticate":"Bearer"}
         )
     return user
-#:TODO: add request so we can update something
+
 @router.put("/update_user/{user_id}")
-async def update_used_account(user_id: int, current_user = Depends(get_current_active_superuser),
+async def update_used_account(request: Request, user_id: int, user: UserEdit, 
+                              current_user = Depends(get_current_active_superuser),
                               db = Depends(get_db)):
-    updated_user = UserProvider.update_user_by_id(user_id = user_id, db = db, schema = UserEdit)
+    updated_user = UserProvider.update_user_by_id(user_id = user_id, db = db, 
+                                                  user = user)
     return ok_response(status_code= status.HTTP_200_OK,
                        details = "User account has been updated",
                        **{"updated_user": updated_user.user_name,
@@ -95,8 +108,8 @@ async def update_used_account(user_id: int, current_user = Depends(get_current_a
     
 
 @router.delete("/delete_user/{user_id}")
-async def delete_unused_account(user_id: int, current_user = Depends(get_current_active_superuser),
-                                db = Depends(get_db)):
+async def delete_unused_account(user_id: int, db = Depends(get_db),
+                                current_user = Depends(get_current_active_superuser)):
     deleted_user = UserProvider.delete_user_by_id(user_id = user_id, db = db)
     return ok_response(status_code= status.HTTP_200_OK,
                        details= "User has been deleted",

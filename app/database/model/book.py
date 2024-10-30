@@ -4,9 +4,11 @@ from sqlalchemy import (
     Column,
     Integer,
     Unicode,
-    TIMESTAMP,
+    DateTime,
     ForeignKey,
+    func
 )
+from database.model.user import UserBook
 
 class Book(Base):
     __tablename__ = "book"
@@ -17,26 +19,25 @@ class Book(Base):
     topic = Column(Unicode(255), nullable=False)
     category = Column(Unicode(255), nullable=False)
     link = Column(Unicode(255), nullable=False)
-    quantity = Column(Integer, nullable=False)
-    status_id = Column(Integer, ForeignKey("status.id", ondelete="CASCADE"))
-
-    status = relationship("Status")
+    #One-to-Many relationship with BookCopy
+    copies = relationship("BookCopy", back_populates="book")
 
     def __repr__(self):
         return "{0} {1} {2} {3} {4}".format(self.author, self.title, 
                                             self.topic, self.category,
                                             self.link)
 
-class Status(Base):
-    __tablename__ = "status"
+class BookCopy(Base):
+    __tablename__ = "book_copy"
 
     id = Column(Integer, primary_key=True)
-    borrowed = Column(Unicode(255), nullable=True)
-    #TODO: check what is better to use timestamp or Column(DateTime, nullable=True/False, default=now())
-    time_taken = Column(TIMESTAMP(timezone=True), nullable=True)
-    time_returned = Column(TIMESTAMP(timezone=True), nullable=True)
-    location_taken= Column(Unicode(255), nullable=False)
-    location_returned = Column(Unicode(255), nullable=False)
+    book_id = Column(Integer, ForeignKey("book.id", ondelete="CASCADE"))
+    borrowed = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    location= Column(Unicode(255), nullable=True)
+
+    book = relationship("Book", back_populates="copies")
+    borrow_logs = relationship("UserBook", back_populates="book_copy")
 
     def __repr__(self):
         return "{0}".format(self.borrowed)
+    
