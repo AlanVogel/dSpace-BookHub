@@ -38,12 +38,15 @@ def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)),
             details = "Account already exist",
             headers = {"WWW-Authenticate":"Bearer"}
         )
-    if user.user_name == form_data.user_name:
-        return error_exception(
-            status_code= status.HTTP_409_CONFLICT,
-            details= "Name already taken",
-            headers= {"WWW-Authenticate":"Bearer"}
-        )
+    db_name = UserProvider.get_user_by_username(username = form_data.user_name,
+                                                db = db)
+    if db_name:
+        if db_name.user_name == form_data.user_name:
+            return error_exception(
+                status_code= status.HTTP_409_CONFLICT,
+                details= "Name already taken",
+                headers= {"WWW-Authenticate":"Bearer"}
+            )
 
     new_user = UserProvider.add_user(db = db, data = form_data)
     if new_user.is_superuser:

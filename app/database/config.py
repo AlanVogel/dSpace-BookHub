@@ -8,7 +8,7 @@ from sqlalchemy.orm import (
 )
 
 load_dotenv()
-engine = create_engine(os.getenv("DATABASE_URL"))
+engine = create_engine(os.getenv("DATABASE_URL"), isolation_level="SERIALIZABLE")
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))

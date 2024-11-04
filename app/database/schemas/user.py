@@ -14,7 +14,7 @@ from email_validator import (
 
 class User(BaseModel):
     user_name: str
-    is_active: bool or None = True
+    is_active: t.Optional[bool] = True
 
     class Config:
         from_attributes = True

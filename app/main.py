@@ -1,13 +1,14 @@
 import uvicorn
 from fastapi import FastAPI
 from starlette.requests import Request
-from router import user
+from router import user, book
 from database.config import db_session, ini_db, drop_db
 
-#drop_db()
+drop_db()
 ini_db()
 app = FastAPI()
 app.include_router(user.router)
+app.include_router(book.router)
 
 #:TODO: check CORS for middleware
 @app.middleware("http")

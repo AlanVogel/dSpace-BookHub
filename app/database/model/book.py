@@ -8,7 +8,6 @@ from sqlalchemy import (
     ForeignKey,
     func
 )
-from database.model.user import UserBook
 
 class Book(Base):
     __tablename__ = "book"

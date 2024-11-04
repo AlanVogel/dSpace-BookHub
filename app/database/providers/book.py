@@ -1,9 +1,10 @@
 from fastapi import status
 from sqlalchemy.orm import Session
-from app.database.model.book import Book, Status
-from app.database.model.user import UserBook
-from app.database.providers.user import UserProvider
-from app.database.schemas import book
+from datetime import datetime
+from database.model.book import Book, BookCopy
+from database.model.user import UserBook
+from database.providers.user import UserProvider
+from database.schemas import book
 from router.helper.router_msg import error_exception
 
 class BookProvider:
@@ -39,7 +40,7 @@ class BookProvider:
     #:TODO: Status model is changed so this need to be refactored
     @staticmethod
     def add_status(data: dict, db:Session):
-        new_status = Status(borrowed = data.borrowed,
+        new_status = BookCopy(borrowed = data.borrowed,
                             time_taken = data.time_taken,
                             time_returned = data.time_taken,
                             location_taken= data.location_taken,
@@ -50,20 +51,19 @@ class BookProvider:
         return new_status
 
     @staticmethod
-    def update_book(title: str, db: Session, book: book.Book):
+    def update_book(title: str, db: Session, book_data_form: book.BookEdit):
         db_book = BookProvider.get_book_by_title(book_title = title, db = db)
         if not db_book:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "Book not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
-        update_data = book.model_dump(exclude_unset=True)
-        book_data_to_update = ["author", "title", "topic", "category", "link",
-                               "quantity"]
+        update_data = book_data_form.model_dump(exclude_unset=True)
+        #book_data_to_update = ["author", "title", "topic", "category", "link"]
         
-        for data in book_data_to_update:
-            if data in update_data:
-                update_data[data] = book[data]
-                del update_data[data]
+        #for data in book_data_to_update:
+        #    if data in update_data:
+        #        update_data[data] = book_data_form.data
+        #        del update_data[data]
         
         for key, value in update_data.items():
             setattr(db_book, key, value)
@@ -74,8 +74,8 @@ class BookProvider:
         return db_book
 
     @staticmethod
-    def delete_book(book_title: str, db: Session):
-        db_book = BookProvider.get_book_by_title(book_title = book_title, db=db)
+    def delete_book(book_id: int, db: Session):
+        db_book = BookProvider.get_book_by_id(book_id = book_id, db=db)
         if not db_book:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "Book not found",
@@ -85,54 +85,62 @@ class BookProvider:
         return db_book
 
     @staticmethod
-    def borrow_book(user_id: int, book_title: str, borrow_status: book.Borrowed,
-                    db: Session):
-        db_book = BookProvider.get_book_by_title(book_title = book_title, db=db)
+    def borrow_book(user_email: str, book_id: str, 
+                    borrow_form_data: book.Borrowed, db: Session):
+        db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
         if not db_book:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "Book not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
-        user = UserProvider.get_user_by_id(user_id = user_id, db = db)
+        user = UserProvider.get_user_by_email(email = user_email, db = db)
         if not user:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "User not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
         
-        db_book_status = db.query(Status).filter(Status.id == 
-                                                 db_book.status_id).first()
-        if db_book.quantity == 0 and db_book_status.borrowed:
-            raise error_exception(status_code = status.HTTP_409_CONFLICT,
-                                  details = f"Book is already borrowed. Please\
-                                  contact the {db_book_status.borrowed} when \ 
-                                  the book will be returned",
-                                  headers = {"WWW-Authenticate":"Bearer"})
-        else:
-            db_book.quantity -= 1
-            db.add(db_book)
-            db.commit()
-            db.refresh(db_book)
-
-        db.add(borrow_status)
+        db_book_status = db.query(BookCopy).filter(BookCopy.id == 
+                                                   db_book.id).first() 
+        
+        if db_book_status:
+            if db_book_status.borrowed:
+                raise error_exception(status_code = status.HTTP_409_CONFLICT,
+                                      details = f"Book is already borrowed."
+                                      f"Please contact the {db_book_status.borrowed}" 
+                                      f"when the book will be returned.",
+                                      headers = {"WWW-Authenticate":"Bearer"})
+        book_copy = BookCopy(book_id = book_id, 
+                             borrowed = user.id,
+                             location = borrow_form_data.location
+                            )
+        db.add(book_copy)
         db.commit()
-        db.refresh(borrow_status)
-        #:TODO: try using user_book model for queries testing
-        return borrow_status
+        db.refresh(book_copy)
+
+        user_book = UserBook(user_id = user.id,
+                             book_copy_id = book_copy.id,
+                             time_taken = datetime.now(),
+                             time_returned = None)
+        db.add(user_book)
+        db.commit(user_book)
+        db.refresh(user_book)
+        return book_copy
             
     @staticmethod
-    def return_book(user_id: int, book_title: str, return_status: book.Returned,
-                    db = Session):
-        db_book = BookProvider.get_book_by_title(book_title = book_title, db=db)
+    def return_book(user_email: str, book_id: int, 
+                    return_form_data: book.Returned, db = Session):
+        db_book = BookProvider.get_book_by_id(book_id = book_id, db=db)
         if not db_book:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "Book not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
-        user = UserProvider.get_user_by_id(user_id = user_id, db = db)
+        user = UserProvider.get_user_by_email(email = user_email, db = db)
         if not user:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "User not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
         
-        new_returned_status = BookProvider.add_status(data=return_status, db=db)
+        new_returned_status = BookProvider.add_status(data=return_form_data, 
+                                                      db=db)
 
         return new_returned_status
         

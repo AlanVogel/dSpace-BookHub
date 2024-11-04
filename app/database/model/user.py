@@ -33,7 +33,7 @@ class UserBook(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     book_copy_id = Column(Integer, ForeignKey("book_copy.id", ondelete="CASCADE"))
-    time_taken = Column(DateTime(timezone=True), default=func.now())
+    time_taken = Column(DateTime(timezone=True), nullable=True)
     time_returned = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="borrowed_books")
