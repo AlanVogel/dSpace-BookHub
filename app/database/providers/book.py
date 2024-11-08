@@ -25,6 +25,16 @@ class BookProvider:
     def get_books_by_category(book_category: str, db: Session):
         return db.query(Book).filter(Book.category == 
                                      book_category).all()
+
+    @staticmethod
+    def get_borrowed_book_by_user_id(borrowed_by: int, db: Session):
+        return db.query(BookCopy).filter(BookCopy.borrowed_by == 
+                                         borrowed_by).first()
+    
+    @staticmethod
+    def get_returned_book_by_user_id(returned_by: int, db: Session):
+        return db.query(BookCopy).filter(BookCopy.returned_by == 
+                                         returned_by).first()
     
     @staticmethod
     def add_book(data: dict, db: Session):
@@ -37,7 +47,7 @@ class BookProvider:
         db.commit()
         db.refresh(new_book)
         return new_book
-    #:TODO: Status model is changed so this need to be refactored
+        
     @staticmethod
     def add_status(data: dict, db:Session):
         new_status = BookCopy(borrowed = data.borrowed,
@@ -98,18 +108,24 @@ class BookProvider:
                                   details = "User not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
         
-        db_book_status = db.query(BookCopy).filter(BookCopy.id == 
+        db_book_status = db.query(BookCopy).filter(BookCopy.book_id == 
                                                    db_book.id).first() 
-        
         if db_book_status:
-            if db_book_status.borrowed:
+            if not db_book_status.returned_by and db_book_status.borrowed_by:
                 raise error_exception(status_code = status.HTTP_409_CONFLICT,
                                       details = f"Book is already borrowed."
-                                      f"Please contact the {db_book_status.borrowed}" 
+                                      f"Please contact the {user.email}" 
                                       f"when the book will be returned.",
                                       headers = {"WWW-Authenticate":"Bearer"})
-        book_copy = BookCopy(book_id = book_id, 
-                             borrowed = user.id,
+            else:
+                user_book = db.query(UserBook).filter(UserBook.book_copy_id ==
+                                                      db_book.id).first()
+                db.delete(db_book_status)
+                db.delete(user_book)
+                db.commit()
+
+        book_copy = BookCopy(book_id = db_book.id, 
+                             borrowed_by = user.id,
                              location = borrow_form_data.location
                             )
         db.add(book_copy)
@@ -118,11 +134,12 @@ class BookProvider:
 
         user_book = UserBook(user_id = user.id,
                              book_copy_id = book_copy.id,
-                             time_taken = datetime.now(),
+                             time_taken = datetime.now().replace(microsecond=0),
                              time_returned = None)
         db.add(user_book)
-        db.commit(user_book)
+        db.commit()
         db.refresh(user_book)
+
         return book_copy
             
     @staticmethod
@@ -139,8 +156,36 @@ class BookProvider:
                                   details = "User not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
         
-        new_returned_status = BookProvider.add_status(data=return_form_data, 
-                                                      db=db)
+        db_book_status = db.query(BookCopy).filter(BookCopy.book_id == 
+                                                   db_book.id).first()
+        if db_book_status:
+            if not db_book_status.borrowed_by and db_book_status.returned_by:
+                raise error_exception(status_code = status.HTTP_409_CONFLICT,
+                                      details = f"Book is already available for"
+                                      f"borrowing. Please check the book status."
+                                      f"Status: {db_book_status.borrowed_by}",
+                                      headers = {"WWW-Authenticate":"Bearer"})
+            else:
+                user_book = db.query(UserBook).filter(UserBook.book_copy_id ==
+                                                      db_book.id).first()
+                db.delete(db_book_status)
+                db.delete(user_book)
+                db.commit()
+        
+        book_copy = BookCopy(book_id = db_book.id, 
+                             returned_by = user.id,
+                             location = return_form_data.location
+                            )
+        db.add(book_copy)
+        db.commit()
+        db.refresh(book_copy)
 
-        return new_returned_status
+        user_book = UserBook(user_id = user.id,
+                             book_copy_id = book_copy.id,
+                             time_taken = None,
+                             time_returned = datetime.now().replace(microsecond=0))
+        db.add(user_book)
+        db.commit()
+        db.refresh(user_book)
+        return book_copy
         

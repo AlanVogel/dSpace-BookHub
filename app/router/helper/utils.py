@@ -1,25 +1,20 @@
 import os
-from fastapi.security import OAuth2PasswordBearer
+from typing import Optional
+from fastapi import Depends, status
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from .router_msg import error_exception
+from .cookie import OAuth2PasswordBearerWithCookie
 from database.schemas.token import TokenData
 from database.schemas.user import UserInDB
 from database.providers import user as provider
 from database.config import get_db
-from fastapi import (
-    Depends,
-    status
-)
-from datetime import (
-    datetime,
-    timedelta,
-    timezone
-)
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_sceme = OAuth2PasswordBearer(tokenUrl="/login")
+oauth2_sceme = OAuth2PasswordBearerWithCookie(tokenUrl="/login")
 
 load_dotenv()
 
@@ -47,7 +42,7 @@ def authenticate_user(db, email: str, password: str):
         return False
     return user
     
-def create_access_token(data: dict, expires_delta: timedelta or None = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta

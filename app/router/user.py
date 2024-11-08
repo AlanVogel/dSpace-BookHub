@@ -5,7 +5,8 @@ from fastapi import (
     Depends, 
     status,
     APIRouter,
-    Request
+    Request,
+    Response
 )
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
@@ -26,9 +27,10 @@ from .helper.utils import (
 load_dotenv()
 router = APIRouter()
 
-#:TODO: response_model=Token? same for login
+
 @router.post("/signup")
-def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)), 
+def signup(response: Response, 
+           form_data: RegisterUser = Depends(make_dependable(RegisterUser)), 
            db = Depends(get_db)):
     user = UserProvider.get_user_by_email(db = db, 
                                           email= form_data.email["email"])
@@ -53,22 +55,21 @@ def signup(form_data: RegisterUser = Depends(make_dependable(RegisterUser)),
         permission = "admin"
     else:
         permission = "employee"
-    #:TODO: access token can be used here and the user doesn't need to login, otherwise
-    # if login is neccessery then access token should be deleted and user should login after
-    # the registration is done (permission with access_token should also be deleted)
     access_token_expire = timedelta(minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
     access_token = create_access_token(
         data = {"sub": new_user.email, "permission": permission},
                 expires_delta= access_token_expire)
+    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", 
+                        httponly=True, samesite="lax")
     return ok_response(status_code = status.HTTP_201_CREATED,
-                       details = "Account successfully created",
+                       details = "Account successfully created.",
                        **{"User_info": {"Username": new_user.user_name, 
                                         "Email": new_user.email}})
 
 @router.post("/login")
-async def login(db = Depends(get_db), 
-                form_data: OAuth2PasswordRequestForm = Depends()) -> Token:
-    #:TODO: need to add error catch depending if user exist or it is a wrong password
+async def login(response: Response, db = Depends(get_db), 
+                form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(db= db, email= form_data.username, 
                              password= form_data.password)
     if not user:
@@ -84,7 +85,17 @@ async def login(db = Depends(get_db),
     access_token = create_access_token(
         data = {"sub": user.email, "permission": permission}, 
                 expires_delta = access_token_expires)
-    return Token(access_token = access_token, token_type = "bearer")
+    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", 
+                        httponly=True, samesite="lax")
+    return ok_response(status_code=status.HTTP_200_OK,
+                       details="Login succefully")
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(key="access_token")
+    return ok_response(status_code=status.HTTP_204_NO_CONTENT,
+                       details="Successfully logged out")
 
 @router.get("/get_user/{user_id}")
 async def user_details(user_id: int, db = Depends(get_db),
@@ -96,7 +107,10 @@ async def user_details(user_id: int, db = Depends(get_db),
             details = "User doesn't exist",
             headers = {"WWW-Authenticate":"Bearer"}
         )
-    return user
+    return ok_response(status_code= status.HTTP_200_OK,
+                       details="Returned user",
+                       **{"Returned user:": f"{user}",
+                          "Requested by:": f"{current_user.email}"})
 
 @router.put("/update_user/{user_id}")
 async def update_used_account(request: Request, user_id: int, user: UserEdit, 

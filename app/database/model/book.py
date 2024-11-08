@@ -31,8 +31,9 @@ class BookCopy(Base):
 
     id = Column(Integer, primary_key=True)
     book_id = Column(Integer, ForeignKey("book.id", ondelete="CASCADE"))
-    borrowed = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
-    location= Column(Unicode(255), nullable=True)
+    borrowed_by = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    returned_by = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    location = Column(Unicode(255), nullable=True)
 
     book = relationship("Book", back_populates="copies")
     borrow_logs = relationship("UserBook", back_populates="book_copy")

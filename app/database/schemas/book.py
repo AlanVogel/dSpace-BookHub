@@ -3,11 +3,11 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class Book(BaseModel):
-    author: t.Optional[str]
-    title: t.Optional[str]
-    topic: t.Optional[str]
-    category: t.Optional[str]
-    link: t.Optional[str]
+    author: str
+    title: str
+    topic: str
+    category: str
+    link: str
 
     class Config:
         from_attributes = True
@@ -28,9 +28,8 @@ class Borrowed(BaseModel):
     class Config:
         from_attributes: True
 
-class Returned(BaseModel):
-    time_returned: datetime
-    location: str
+class Returned(Borrowed):
+    pass
 
     class Config:
         from_attributes: True
