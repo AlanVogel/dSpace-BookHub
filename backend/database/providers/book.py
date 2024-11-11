@@ -118,10 +118,13 @@ class BookProvider:
                                       f"when the book will be returned.",
                                       headers = {"WWW-Authenticate":"Bearer"})
             else:
-                user_book = db.query(UserBook).filter(UserBook.book_copy_id ==
-                                                      db_book.id).first()
+                db_user_book = db.query(UserBook).filter(UserBook.book_copy_id 
+                                                         == db_book_status.id
+                                                         ).first()
+                if db_user_book:
+                    db.delete(db_user_book)
+                    db.commit()
                 db.delete(db_book_status)
-                db.delete(user_book)
                 db.commit()
 
         book_copy = BookCopy(book_id = db_book.id, 
@@ -166,10 +169,13 @@ class BookProvider:
                                       f"Status: {db_book_status.borrowed_by}",
                                       headers = {"WWW-Authenticate":"Bearer"})
             else:
-                user_book = db.query(UserBook).filter(UserBook.book_copy_id ==
-                                                      db_book.id).first()
+                db_user_book = db.query(UserBook).filter(UserBook.book_copy_id 
+                                                         == db_book_status.id
+                                                         ).first()
+                if db_user_book:
+                    db.delete(db_user_book)
+                    db.commit()
                 db.delete(db_book_status)
-                db.delete(user_book)
                 db.commit()
         
         book_copy = BookCopy(book_id = db_book.id, 

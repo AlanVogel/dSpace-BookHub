@@ -11,7 +11,6 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
 from database.schemas.helper.utils import make_dependable
-from database.schemas.token import Token
 from database.schemas.user import RegisterUser, UserEdit
 from database.providers.user import UserProvider
 from .helper.router_msg import (

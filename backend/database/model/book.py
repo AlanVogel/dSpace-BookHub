@@ -4,9 +4,7 @@ from sqlalchemy import (
     Column,
     Integer,
     Unicode,
-    DateTime,
     ForeignKey,
-    func
 )
 
 class Book(Base):

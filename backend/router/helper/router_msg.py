@@ -1,7 +1,8 @@
+from typing import Optional
 from fastapi import HTTPException
 from datetime import datetime
 
-def error_exception(status_code: int, details: str, headers: dict[str, str] or None):
+def error_exception(status_code: int, details: str, headers: Optional[dict[str, str]]):
     credential_exception = HTTPException(status_code = status_code,
                                          detail = details,
                                          headers = headers)

@@ -1,6 +1,5 @@
 import typing as t
 from pydantic import BaseModel
-from datetime import datetime
 
 class Book(BaseModel):
     author: str
