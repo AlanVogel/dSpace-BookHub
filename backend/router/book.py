@@ -6,10 +6,10 @@ from fastapi import (
 from database.config import get_db
 from database.schemas.helper.utils import make_dependable
 from database.providers.book import BookProvider
-from database.schemas.book import Book, BookEdit, Borrowed, Returned
+from database.schemas.book import Book, BookEdit, Borrowed, Returned, BookResponse
 from .helper.utils import (
     get_current_active_superuser, 
-    get_current_user
+    get_current_active_user
 )
 from .helper.router_msg import (
     error_exception,
@@ -25,8 +25,8 @@ async def add_book(data: Book = Depends(make_dependable(Book)), db = Depends(get
     new_book = BookProvider.add_book(data = data, db = db)
     return ok_response(status_code = status.HTTP_201_CREATED,
                        details= "Book has been added",
-                       **{"Added by:": current_user.email,
-                          "Book added:": new_book.title})
+                       **{"Added_by": current_user.email,
+                          "Book_added": new_book.title})
  
 @router.delete("/delete_book")
 async def delete_book(book_id: int, db = Depends(get_db), 
@@ -39,8 +39,8 @@ async def delete_book(book_id: int, db = Depends(get_db),
     deleted_book = BookProvider.delete_book(book_id = db_book.id, db = db)
     return ok_response(status_code = status.HTTP_202_ACCEPTED,
                        details = "Book deleted",
-                       **{"Book deleted:": f"{deleted_book.title}",
-                          "Deleted by:": f"{current_user.email}"})
+                       **{"Book_deleted": f"{deleted_book.title}",
+                          "Deleted_by": f"{current_user.email}"})
 
 @router.put("/update_book")
 async def update_book(book_id: int, data_form: BookEdit ,db = Depends(get_db),
@@ -54,12 +54,12 @@ async def update_book(book_id: int, data_form: BookEdit ,db = Depends(get_db),
                                             book_data_form= data_form)
     return ok_response(status_code = status.HTTP_200_OK,
                        details = "Book updated",
-                       **{"Updated book:": f"{updated_book.title}",
-                          "Updated by:": f"{current_user.email}"})
+                       **{"Updated_book": f"{updated_book.title}",
+                          "Updated_by": f"{current_user.email}"})
 
 @router.get("/get_book")
 async def get_book(book_id: int, db = Depends(get_db), 
-                   current_user = Depends(get_current_user)):
+                   current_user = Depends(get_current_active_user)):
     db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
     if not db_book:
         return error_exception(status_code = status.HTTP_404_NOT_FOUND,
@@ -67,13 +67,23 @@ async def get_book(book_id: int, db = Depends(get_db),
                                headers = {"WWW-Authenticate":"Bearer"})
     return ok_response(status_code = status.HTTP_200_OK,
                        details = "Book found",
-                       **{"Book title:": f"{db_book.title}",
-                          "Requested by:": f"{current_user.email}"})
+                       **{"Book_title": f"{db_book.title}",
+                          "Requested_by": f"{current_user.email}"})
+
+@router.get("/get_books", response_model=list[BookResponse])
+async def get_books(db = Depends(get_db), 
+                   current_user = Depends(get_current_active_user)):
+    db_books = BookProvider.get_all_books(db = db)
+    if not db_books:
+        raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                               details = "Book not found",
+                               headers = {"WWW-Authenticate":"Bearer"})
+    return db_books
 
 @router.post("/borrow_book")
 async def borrow_book(book_id: int, borrow_data_form: Borrowed,
                       db = Depends(get_db), 
-                      current_user = Depends(get_current_user)):
+                      current_user = Depends(get_current_active_user)):
     db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
     if not db_book:
         return error_exception(status_code = status.HTTP_404_NOT_FOUND,
@@ -85,14 +95,14 @@ async def borrow_book(book_id: int, borrow_data_form: Borrowed,
                                              db = db)
     return ok_response(status_code = status.HTTP_200_OK,
                        details = "Book borrowed",
-                       **{"Book title:": f"{borrowed_book.book.title}",
-                          "Borrowed by:": f"{current_user.email}",
-                          "Location:": f"{borrowed_book.location}"})
+                       **{"Book_title": f"{borrowed_book.book.title}",
+                          "Borrowed_by": f"{current_user.email}",
+                          "Location": f"{borrowed_book.location}"})
 
 @router.post("/return_book")
 async def return_book(book_id: int, return_data_form: Returned, 
                       db = Depends(get_db), 
-                      current_user = Depends(get_current_user)):
+                      current_user = Depends(get_current_active_user)):
     db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
     if not db_book:
         return error_exception(status_code = status.HTTP_404_NOT_FOUND,
@@ -104,6 +114,6 @@ async def return_book(book_id: int, return_data_form: Returned,
                                              db=db)
     return ok_response(status_code = status.HTTP_200_OK,
                        details = "Book returned",
-                       **{"Book title": f"{returned_book.book.title}",
-                          "Returned by": f"{current_user.email}",
-                          "Location:":f"{returned_book.location}"})
+                       **{"Book_title": f"{returned_book.book.title}",
+                          "Returned_by": f"{current_user.email}",
+                          "Location":f"{returned_book.location}"})

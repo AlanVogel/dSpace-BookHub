@@ -8,7 +8,7 @@ from router import user, book
 from database.config import db_session, ini_db, drop_db
 
 load_dotenv()
-drop_db()
+#drop_db()
 ini_db()
 app = FastAPI()
 app.include_router(user.router)
@@ -23,10 +23,10 @@ async def db_session_middleware(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = os.getenv("ORIGINS"),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins = ["http://localhost:3000"],
+    allow_credentials = True,
+    allow_methods = ["*"],
+    allow_headers = ["*"],
 )
 
 if __name__ == '__main__':

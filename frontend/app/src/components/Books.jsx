@@ -1,9 +1,11 @@
-import React from 'react';
+import React from "react"
 
-export default function Books() {
+function Books() {
   return (
-    <div>
-        this is book page
+    <div className="bg-white px-4 pt-3 pb-4 rounded-sm border border-gray-200 w-[20rem]">
+        <strong>Books</strong>
     </div>
   )
 }
+
+export default Books;

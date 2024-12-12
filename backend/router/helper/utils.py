@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import Depends, status
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+from pydantic import ValidationError
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from .router_msg import error_exception
@@ -65,7 +66,7 @@ async def get_current_user(token: str = Depends(oauth2_sceme), db = Depends(get_
             raise credential_exception
         token_data = TokenData(email = email, permission = permission)
 
-    except JWTError:
+    except (JWTError, ValidationError):
         raise credential_exception
     user = get_user(db = db, email = token_data.email)
     if user is None:

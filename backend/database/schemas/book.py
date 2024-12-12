@@ -11,6 +11,10 @@ class Book(BaseModel):
     class Config:
         from_attributes = True
 
+class BookResponse(Book):
+    id: int
+    status: str
+
 class BookEdit(BaseModel):
     author: t.Optional[str] = None
     title: t.Optional[str] = None

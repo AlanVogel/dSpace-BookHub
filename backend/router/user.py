@@ -28,8 +28,8 @@ router = APIRouter()
 
 
 @router.post("/signup")
-def signup(response: Response, 
-           form_data: RegisterUser = Depends(make_dependable(RegisterUser)), 
+def signup(response: Response,
+           form_data: RegisterUser, #= Depends(make_dependable(RegisterUser)), this is for JSON/FORM data 
            db = Depends(get_db)):
     user = UserProvider.get_user_by_email(db = db, 
                                           email= form_data.email["email"])
@@ -58,9 +58,9 @@ def signup(response: Response,
     access_token = create_access_token(
         data = {"sub": new_user.email, "permission": permission},
                 expires_delta= access_token_expire)
-    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS
+    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS in production!!!!
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", 
-                        httponly=True, samesite="lax")
+                        httponly=True, samesite="lax", secure=False)
     return ok_response(status_code = status.HTTP_201_CREATED,
                        details = "Account successfully created.",
                        **{"User_info": {"Username": new_user.user_name, 
@@ -84,9 +84,9 @@ async def login(response: Response, db = Depends(get_db),
     access_token = create_access_token(
         data = {"sub": user.email, "permission": permission}, 
                 expires_delta = access_token_expires)
-    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS
+    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS in the production!!!!
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", 
-                        httponly=True, samesite="lax")
+                        httponly=True, samesite="lax", secure=False)
     return ok_response(status_code=status.HTTP_200_OK,
                        details="Login succefully")
 
@@ -108,8 +108,8 @@ async def user_details(user_id: int, db = Depends(get_db),
         )
     return ok_response(status_code= status.HTTP_200_OK,
                        details="Returned user",
-                       **{"Returned user:": f"{user}",
-                          "Requested by:": f"{current_user.email}"})
+                       **{"Returned_user": f"{user}",
+                          "Requested_by": f"{current_user.email}"})
 
 @router.put("/update_user/{user_id}")
 async def update_used_account(request: Request, user_id: int, user: UserEdit, 
@@ -119,8 +119,8 @@ async def update_used_account(request: Request, user_id: int, user: UserEdit,
                                                   user = user)
     return ok_response(status_code= status.HTTP_200_OK,
                        details = "User account has been updated",
-                       **{"updated_user": updated_user.user_name,
-                          "updated_by": current_user.email})
+                       **{"Updated_user": updated_user.user_name,
+                          "Updated_by": current_user.email})
     
 
 @router.delete("/delete_user/{user_id}")
@@ -129,5 +129,5 @@ async def delete_unused_account(user_id: int, db = Depends(get_db),
     deleted_user = UserProvider.delete_user_by_id(user_id = user_id, db = db)
     return ok_response(status_code= status.HTTP_200_OK,
                        details= "User has been deleted",
-                       **{"deleted_user": deleted_user.user_name,
-                          "deleted_by": current_user.email})
+                       **{"Deleted_user": deleted_user.user_name,
+                          "Deleted_by": current_user.email})

@@ -1,4 +1,5 @@
 from fastapi import status
+from sqlalchemy import case, asc
 from sqlalchemy.orm import Session
 from datetime import datetime
 from database.model.book import Book, BookCopy
@@ -8,6 +9,30 @@ from database.schemas import book
 from router.helper.router_msg import error_exception
 
 class BookProvider:
+
+    @staticmethod
+    def get_all_books(db:Session):
+        books_with_status = db.query(
+            Book,
+            case(
+                (BookCopy.borrowed_by != None, "UNAVAILABLE"),
+                else_="AVAILABLE"
+            ).label("status")
+        ).outerjoin(BookCopy, Book.id == BookCopy.book_id).order_by(asc(Book.id)).all()
+
+        books = []
+        for book, status in books_with_status:
+            books.append({
+                "id": book.id,
+                "author": book.author,
+                "title": book.title,
+                "topic": book.topic,
+                "category": book.category,
+                "link": book.link,
+                "status": status
+            })
+        return books
+        #return db.query(Book).all()
 
     @staticmethod
     def get_book_by_id(book_id: int, db: Session):
