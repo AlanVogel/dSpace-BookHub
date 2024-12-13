@@ -70,6 +70,7 @@ export const signup = async (
     try {
         const {data} = await axios.post(`${BACKEND_URL}/signup`, payload, {
             headers: {"Content-Type": "application/json"},
+            withCredentials: true,
         });
         console.log("Signup successful:", data);
         return data;
@@ -84,6 +85,12 @@ export const signup = async (
 
 }
 
-export const logout = () => {
-    Cookie.remove("token", {path: "/"});
-}
+export const logout = async () => {
+    try {
+        const response = await axios.post(`${BACKEND_URL}/logout`, {}, { withCredentials: true });
+        console.log(response.data.details);
+        window.location.reload();
+    } catch (error) {
+        console.error("Failed to log out:", error.response?.data || error.message);
+    }
+};

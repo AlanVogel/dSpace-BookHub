@@ -1,7 +1,7 @@
 import React, { useEffect, useState }  from "react"
 import { getOrderStatus, Action } from "./lib/helpers"
-import { returnBooks } from "./Admin/Book";
-//{onEdit} is new
+import { deleteBook, returnBooks } from "./Admin/Book";
+
 function BookTable( {onEdit} ) {
     const [books, setBooks] = useState([]);
 
@@ -18,17 +18,17 @@ function BookTable( {onEdit} ) {
         fetchBooks();
     }, []);
 
-    const handleEdit = (order) => {
-        onEdit(order);
-        console.log("Editing:", order); // Open edit modal or similar logic
+    const handleEdit = (book) => {
+        onEdit(book);
     };
 
-    const handleBorrow = (order) => {
-        console.log("Borrowing:", order); // Perform borrow logic here
+    const handleBorrow = (book) => {
+        console.log("Borrowing:", book); // Perform borrow logic here
     };
 
-    const handleDelete = (order) => {
-        console.log("Deleting:", order); // Perform delete logic here
+    const handleDelete = (book) => {
+        deleteBook(book);
+        window.location.reload();
     };
 
   return (

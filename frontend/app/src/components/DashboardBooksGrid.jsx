@@ -1,7 +1,8 @@
 import React from "react";
 import {GiBookCover, GiWhiteBook} from "react-icons/gi";
 
-function DashboardBooksGrid() {
+
+function DashboardBooksGrid( {totalBooks} ) {
   return (
     <div className="flex gap-4 w-1/2">
         <BoxWrapper>
@@ -11,7 +12,7 @@ function DashboardBooksGrid() {
           <div className="pl-4">
             <span className="text-sm text-gray-500 font-light">Total Books</span>
             <div className="flex items-center">
-              <strong className="text-xl text-gray-700 font-semibold">0</strong>
+              <strong className="text-xl text-gray-700 font-semibold">{totalBooks}</strong>
             </div>
           </div>
         </BoxWrapper>

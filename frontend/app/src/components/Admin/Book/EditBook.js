@@ -2,6 +2,7 @@ import axios from "axios";
 import { BACKEND_URL } from "../../../config";
 
 export const editBook = async (
+    bookId,
     author,
     title,
     topic,
@@ -18,15 +19,17 @@ export const editBook = async (
     };
 
     try {
-        console.log("Access Token:", token);
         const {data} = await axios.patch(`${BACKEND_URL}/update_book`, payload, 
         {
+            params: {
+                book_id: bookId, 
+            },
             headers: {
                 "Content-Type": "application/json",
             },
             withCredentials: true,
         });
-        console.log("Book successfully added:", data);
+        console.log("Book successfully updated");
         return data;
     } catch (error) {
         if (error.response) {
@@ -36,4 +39,4 @@ export const editBook = async (
             console.error("Request Error:", error.message);
         }
     }
-}
+};

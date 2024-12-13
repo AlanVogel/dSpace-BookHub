@@ -86,8 +86,8 @@ class BookProvider:
         return new_status
 
     @staticmethod
-    def update_book(title: str, db: Session, book_data_form: book.BookEdit):
-        db_book = BookProvider.get_book_by_title(book_title = title, db = db)
+    def update_book(book_id: int, db: Session, book_data_form: book.BookEdit):
+        db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
         if not db_book:
             raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                   details = "Book not found",

@@ -4,6 +4,7 @@ import Login from "./components/Auth/Login"
 import Register from "./components/Auth/Register";
 import Layout from "./components/shared/Layout";
 import Dashboard from "./components/Dashboard";
+import Logout from "./components/Auth/Logout";
 //import Books from "./components/Books";
 
 
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/logout" element={<Logout />} />
         <Route path="/home" element={<Layout />}>
           <Route index element={<Dashboard />} />
           {/*<Route path="/home/books" element={<Books />}/>*/}

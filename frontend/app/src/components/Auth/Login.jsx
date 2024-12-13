@@ -13,9 +13,10 @@ export const Login = () => {
     setError("");
 
     try {
+        console.log("Password", password);
         const data = await login(email, password);
 
-        if (data) {
+        if (data.status_code === 200) {
             navigate("/home");
         } 
     } catch (err) {

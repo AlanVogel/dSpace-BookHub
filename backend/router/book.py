@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.post("/add_book")
-async def add_book(data: Book = Depends(make_dependable(Book)), db = Depends(get_db), 
+async def add_book(data:Book, db = Depends(get_db), #data: Book= Depends(make_dependable(Book)), db = Depends(get_db), 
                    current_user = Depends(get_current_active_superuser)):
     new_book = BookProvider.add_book(data = data, db = db)
     return ok_response(status_code = status.HTTP_201_CREATED,
@@ -42,7 +42,7 @@ async def delete_book(book_id: int, db = Depends(get_db),
                        **{"Book_deleted": f"{deleted_book.title}",
                           "Deleted_by": f"{current_user.email}"})
 
-@router.put("/update_book")
+@router.patch("/update_book")
 async def update_book(book_id: int, data_form: BookEdit ,db = Depends(get_db),
                       current_user = Depends(get_current_active_superuser)):
     db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
@@ -50,11 +50,12 @@ async def update_book(book_id: int, data_form: BookEdit ,db = Depends(get_db),
         return error_exception(status_code = status.HTTP_404_NOT_FOUND,
                                details = "Book not found",
                                headers = {"WWW-Authenticate":"Bearer"})
-    updated_book = BookProvider.update_book(title = db_book.title, db = db,
+    updated_book = BookProvider.update_book(book_id = db_book.id, db = db,
                                             book_data_form= data_form)
     return ok_response(status_code = status.HTTP_200_OK,
                        details = "Book updated",
-                       **{"Updated_book": f"{updated_book.title}",
+                       **{"Book_ID": f"{updated_book.id}",
+                          "Updated_book": f"{updated_book.title}",
                           "Updated_by": f"{current_user.email}"})
 
 @router.get("/get_book")

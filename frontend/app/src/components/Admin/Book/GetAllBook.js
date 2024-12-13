@@ -16,7 +16,6 @@ export const returnBooks = async () => {
         });
         
         return data;
-
     } catch (error) {
         if (error.response) {
             console.error("Validation Error Response:", error.response.data);
@@ -26,4 +25,4 @@ export const returnBooks = async () => {
         }
         return null;
     }
-}
+};
