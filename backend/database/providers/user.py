@@ -20,6 +20,22 @@ class UserProvider:
         return db.query(User).filter(User.email == email).first()
     
     @staticmethod
+    def get_all_users(db:Session):
+        users = db.query(User).all()
+
+        user_list = []
+        for user in users:
+            user_list.append({
+                "id": user.id,
+                "user_name": user.user_name,
+                "email": user.email,
+                "hashed_password": user.hashed_password,
+                "is_active": user.is_active,
+                "is_superuser": user.is_superuser,
+            })
+        return user_list
+    
+    @staticmethod
     def update_user_by_id(user_id: int, db: Session, user: user.UserEdit):
         db_user = UserProvider.get_user_by_id(user_id = user_id, db = db)
         if not db_user:

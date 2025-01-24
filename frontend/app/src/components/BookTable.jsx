@@ -1,5 +1,5 @@
-import React, { useEffect, useState }  from "react"
-import { getOrderStatus, Action } from "./lib/helpers"
+import React, { useEffect, useState }  from "react";
+import { getOrderStatus, Action } from "./libs/helpers";
 import { deleteBook, returnBooks } from "./Admin/Book";
 
 function BookTable( {onEdit} ) {

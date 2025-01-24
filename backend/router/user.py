@@ -11,7 +11,7 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
 from database.schemas.helper.utils import make_dependable
-from database.schemas.user import RegisterUser, UserEdit
+from database.schemas.user import RegisterUser, UserEdit, UserResponse
 from database.providers.user import UserProvider
 from .helper.router_msg import (
     error_exception,
@@ -111,6 +111,18 @@ async def user_details(user_id: int, db = Depends(get_db),
                        **{"Returned_user": f"{user}",
                           "Requested_by": f"{current_user.email}"})
 
+@router.get("/get_users", response_model=list[UserResponse])
+async def get_users(db = Depends(get_db), 
+                    current_user = Depends(get_current_active_superuser)):
+    users = UserProvider.get_all_users(db = db)
+    if not users:
+        return error_exception(
+            status_code= status.HTTP_404_NOT_FOUND,
+            details = "Users doesn't exist",
+            headers = {"WWW-Authenticate": "Bearer"}
+        )
+    return users
+
 @router.put("/update_user/{user_id}")
 async def update_used_account(request: Request, user_id: int, user: UserEdit, 
                               current_user = Depends(get_current_active_superuser),
@@ -123,7 +135,7 @@ async def update_used_account(request: Request, user_id: int, user: UserEdit,
                           "Updated_by": current_user.email})
     
 
-@router.delete("/delete_user/{user_id}")
+@router.delete("/delete_user")
 async def delete_unused_account(user_id: int, db = Depends(get_db),
                                 current_user = Depends(get_current_active_superuser)):
     deleted_user = UserProvider.delete_user_by_id(user_id = user_id, db = db)

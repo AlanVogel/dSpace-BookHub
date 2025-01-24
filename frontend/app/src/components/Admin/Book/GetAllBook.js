@@ -1,4 +1,4 @@
-import Cookie from "js-cookie"
+import Cookie from "js-cookie";
 import axios from "axios";
 import { BACKEND_URL } from "../../../config";
 

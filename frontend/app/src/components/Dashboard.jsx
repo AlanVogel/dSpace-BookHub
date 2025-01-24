@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import DashboardBooksGrid from "./DashboardBooksGrid";
 import BookTable from "./BookTable";
-import { Modal } from "./lib/helpers/Modal";
+import { Modal } from "./libs/helpers/Modal";
 
 export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
