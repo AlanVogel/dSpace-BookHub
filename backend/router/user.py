@@ -123,10 +123,9 @@ async def get_users(db = Depends(get_db),
         )
     return users
 
-@router.put("/update_user/{user_id}")
-async def update_used_account(request: Request, user_id: int, user: UserEdit, 
-                              current_user = Depends(get_current_active_superuser),
-                              db = Depends(get_db)):
+@router.patch("/update_user")
+async def update_used_account(user_id: int, user: UserEdit, db = Depends(get_db),
+                              current_user = Depends(get_current_active_superuser)):
     updated_user = UserProvider.update_user_by_id(user_id = user_id, db = db, 
                                                   user = user)
     return ok_response(status_code= status.HTTP_200_OK,

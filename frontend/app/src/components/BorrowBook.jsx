@@ -1,12 +1,12 @@
 import React, { useEffect, useState }  from "react";
-import { getBorrowedBooks, restoreBook } from "./Admin/Book";
-import { getOrderStatus, UserAction } from "./libs/helpers"; 
+import { getBorrowedBooks } from "./Admin/Book";
+import { getOrderStatus, BookAction } from "./libs/helpers"; 
 
-function BorrowBook() {
+function BorrowBook( {onReturn} ) {
   const [books, setBooks] = useState([]);
       
       useEffect(() => {
-          const fetchUsers = async () => {
+          const fetchBorrowedBooks = async () => {
               const data = await getBorrowedBooks();
               if (Array.isArray(data)) {
                   setBooks(data);
@@ -15,11 +15,11 @@ function BorrowBook() {
                   setBooks([]);
               }
           };
-          fetchUsers();
+          fetchBorrowedBooks();
       }, []);
   
       const handleReturnBook = (book) => {
-          restoreBook(book);
+        onReturn(book);
       };
 
     return (
@@ -29,6 +29,7 @@ function BorrowBook() {
                 <table className="w-full text-gray-700">
                   <thead>
                     <tr className="font-bold">
+                      <td>#</td>
                       <td>ID</td> 
                       <td>Author</td> 
                       <td className="expand">Title</td> 
@@ -40,23 +41,24 @@ function BorrowBook() {
                   </thead>
                   <tbody>
                     {Array.isArray(books) && 
-                    books.map((book) => (
+                    books.map((book, index) => (
                       <tr key={book.id}>
-                      <td>#{book.id}</td>
-                      <td>{book.author}</td> 
-                      <td><a href={`https://${book.link}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline underline-offset-4
-                             hover:text-blue-500">
-                            {book.title}</a></td> 
-                      <td>{book.topic}</td> 
-                      <td>{book.category}</td>
-                      <td>{getOrderStatus(book.status)}</td>
-                      <td>
-                        <UserAction
-                          onBorrow={() => handleReturnBook(book)} /> 
-                      </td>
+                        <td>{index+1}</td>
+                        <td>{book.book_id}</td>
+                        <td>{book.author}</td> 
+                        <td><a href={`https://${book.link}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline underline-offset-4
+                              hover:text-blue-500">
+                              {book.title}</a></td> 
+                        <td>{book.topic}</td> 
+                        <td>{book.category}</td>
+                        <td>{book.location}</td>
+                        <td>
+                          <BookAction
+                            onReturn={() => handleReturnBook(book)} /> 
+                        </td>
                      </tr>
                     ))}
                   </tbody>

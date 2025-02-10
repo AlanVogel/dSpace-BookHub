@@ -1,8 +1,9 @@
+import Cookie from "js-cookie";
 import axios from "axios";
 import { BACKEND_URL } from "../../../config";
 
 export const editBook = async (
-    bookId,
+    bookID,
     author,
     title,
     topic,
@@ -19,12 +20,14 @@ export const editBook = async (
     };
 
     try {
+        const token = Cookie.get("access_token");
         const {data} = await axios.patch(`${BACKEND_URL}/update_book`, payload, 
         {
             params: {
-                book_id: bookId, 
+                book_id: bookID, 
             },
             headers: {
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
             withCredentials: true,

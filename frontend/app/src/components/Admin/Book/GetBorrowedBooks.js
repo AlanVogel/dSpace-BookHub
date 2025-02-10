@@ -14,7 +14,6 @@ export const getBorrowedBooks = async () => {
                 "Content-Type": "application/json",
             },
         });
-        
         return data;
     } catch (error) {
         if (error.response) {

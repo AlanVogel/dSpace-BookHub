@@ -5,9 +5,8 @@ import Register from "./components/Auth/Register";
 import Layout from "./components/shared/Layout";
 import Dashboard from "./components/Dashboard";
 import Logout from "./components/Auth/Logout";
-import BorrowBook from "./components/BorrowBook";
-import Employee from "./components/Employee";
-//import Books from "./components/Books";
+import EmployeeDashboard from "./components/EmployeeDashboard";
+import BorrowBookDashboard from "./components/BorrowBookDashboard";
 
 
 function App() {
@@ -19,9 +18,8 @@ function App() {
         <Route path="/logout" element={<Logout />} />
         <Route path="/home" element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route path="/home/customers" element={<Employee />} />
-          <Route path="/home/books" element={<BorrowBook />} />
-          {/*<Route path="/home/books" element={<Books />}/>*/}
+          <Route path="/home/customers" element={<EmployeeDashboard />} />
+          <Route path="/home/books" element={<BorrowBookDashboard />} />
         </Route>
       </Routes>
     </Router>

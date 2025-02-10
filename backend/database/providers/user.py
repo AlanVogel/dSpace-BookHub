@@ -43,11 +43,8 @@ class UserProvider:
                                   details = "User not found",
                                   headers = {"WWW-Authenticate":"Bearer"})
         update_data = user.model_dump(exclude_unset=True)
-
-        if "password" in update_data:
-            update_data["hashed_password"] = get_password_hash(user.password)
-            del update_data["password"]
-        
+        update_data = {key: value for key, value in update_data.items() 
+                       if value != ""}
         for key, value in update_data.items():
             setattr(db_user, key, value)
         

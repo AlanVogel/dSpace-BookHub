@@ -32,7 +32,6 @@ class BookProvider:
                 "status": status
             })
         return books
-        #return db.query(Book).all()
 
     @staticmethod
     def get_book_by_id(book_id: int, db: Session):
@@ -52,9 +51,9 @@ class BookProvider:
                                      book_category).all()
 
     @staticmethod
-    def get_borrowed_book_by_user_id(borrowed_by: int, db: Session):
+    def get_borrowed_books_by_user_id(borrowed_by: int, db: Session):
         return db.query(BookCopy).filter(BookCopy.borrowed_by == 
-                                         borrowed_by).first()
+                                         borrowed_by).all()
     
     @staticmethod
     def get_returned_book_by_user_id(returned_by: int, db: Session):

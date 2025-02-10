@@ -1,10 +1,10 @@
 import React, { useEffect, useState} from "react";
-import { returnUsers, deleteUser, editUser } from "./Admin/User";
+import { returnUsers, deleteUser} from "./Admin/User";
 import { UserAction } from "./libs/helpers";
 
-function Employee() {
+function Employee( {onEdit} ) {
     const [user, setUsers] = useState([]);
-    
+
     useEffect(() => {
         const fetchUsers = async () => {
             const data = await returnUsers();
@@ -19,7 +19,7 @@ function Employee() {
     }, []);
 
     const handleEdit = (user) => {
-        editUser(user);
+        onEdit(user);
     };
     
     const handleDelete = (user) => {
@@ -33,6 +33,7 @@ function Employee() {
                 <table className="w-full text-gray-700">
                     <thead>
                         <tr className="font-bold">
+                            <td>#</td>
                             <td>ID</td> 
                             <td>Name</td> 
                             <td>Email</td> 
@@ -44,9 +45,10 @@ function Employee() {
                     </thead>
                     <tbody>
                         {Array.isArray(user) && 
-                         user.map((user) => (
+                         user.map((user, index) => (
                             <tr key={user.id}>
-                                <td>#{user.id}</td>
+                                <td>{index+1}</td>
+                                <td>{user.id}</td>
                                 <td>{user.user_name}</td>
                                 <td>{user.email}</td> 
                                 <td>{user.hashed_password}</td>

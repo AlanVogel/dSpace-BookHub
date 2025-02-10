@@ -2,17 +2,27 @@ import Cookie from "js-cookie"
 import axios from "axios";
 import { BACKEND_URL } from "../../../config";
 
-export const restoreBook = async () => {
+export const restoreBook = async ( 
+    bookID,
+    location
+    ) => {
+    
+    const payload = {
+        location: location
+    }
 
     try {
         const token = Cookie.get("access_token");
-        const { data } = await axios.get(`${BACKEND_URL}/return_book`, {
-            withCredentials: true,
-
+        const { data } = await axios.post(`${BACKEND_URL}/return_book`, payload,
+        {
+            params: {
+                book_id: bookID, 
+            },
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
+            withCredentials: true,
         });
         
         return data;

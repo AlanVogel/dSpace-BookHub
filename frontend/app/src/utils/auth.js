@@ -25,7 +25,6 @@ export const login = async (email, password) => {
             headers: {"Content-Type": "multipart/form-data"},
             withCredentials: true,
         });
-        console.log("Signup successful:", data);
         return data;
     } catch (error) {
         if (error.response) {
@@ -72,7 +71,6 @@ export const signup = async (
             headers: {"Content-Type": "application/json"},
             withCredentials: true,
         });
-        console.log("Signup successful:", data);
         return data;
     } catch (error) {
         if (error.response) {

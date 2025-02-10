@@ -6,6 +6,7 @@ from fastapi import (
 from database.config import get_db
 from database.schemas.helper.utils import make_dependable
 from database.providers.book import BookProvider
+from database.providers.user import UserProvider
 from database.schemas.book import Book, BookEdit, Borrowed, Returned, BookResponse
 from .helper.utils import (
     get_current_active_superuser, 
@@ -43,7 +44,7 @@ async def delete_book(book_id: int, db = Depends(get_db),
                           "Deleted_by": f"{current_user.email}"})
 
 @router.patch("/update_book")
-async def update_book(book_id: int, data_form: BookEdit ,db = Depends(get_db),
+async def update_book(book_id: int, data_form: BookEdit, db = Depends(get_db),
                       current_user = Depends(get_current_active_superuser)):
     db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
     if not db_book:
@@ -80,6 +81,33 @@ async def get_books(db = Depends(get_db),
                                details = "Book not found",
                                headers = {"WWW-Authenticate":"Bearer"})
     return db_books
+
+@router.get("/borrowed_books")
+def get_borrowed_books(db = Depends(get_db),
+                       current_user = Depends(get_current_active_user)):
+    user = UserProvider.get_user_by_email(email = current_user.email, db = db)
+    if not user:
+        raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                              details = "User doesn't exist",
+                              headers = {"WWW-Authenticate":"Bearer"})
+    borrowed_books = BookProvider.get_borrowed_books_by_user_id(borrowed_by = 
+                                                                user.id, 
+                                                                db = db)
+    if not borrowed_books:
+        raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                              details = "No borrowed books found",
+                              headers = {"WWW-Authenticate":"Bearer"})
+    return [
+        {
+            "book_id": book.book_id,
+            "author": book.book.author,
+            "title": book.book.title,
+            "topic": book.book.topic,
+            "category": book.book.category,
+            "location": book.location
+        }
+        for book in borrowed_books
+    ]
 
 @router.post("/borrow_book")
 async def borrow_book(book_id: int, borrow_data_form: Borrowed,

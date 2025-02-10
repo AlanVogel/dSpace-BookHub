@@ -87,3 +87,30 @@ export function UserAction({ onEdit, onDelete }) {
         </div>
     );
 }
+
+export function BookAction({ onReturn }) {
+    return (
+        <div className="relative inline-block text-right">
+            <Menu>
+                <MenuButton className="inline-flex items-center gap-2 rounded-md bg-gray-800 py-1.5 px-3 text-sm font-semibold text-white shadow focus:outline-none hover:bg-gray-700">
+                    Options
+                    <FaChevronDown className="size-4 fill-white/60" />
+                </MenuButton>
+                <MenuItems
+                    className="absolute right-0 z-50 mt-2 w-52 origin-top-right rounded-lg bg-white p-1 shadow-lg focus:outline-none"
+                >
+                    <MenuItem
+                        as="button"
+                        onClick={onReturn}
+                        className={({ active }) =>
+                            `${active ? "bg-gray-100" : ""} group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-sm`
+                        }
+                    >
+                        <HiMiniPencil className="size-4 text-gray-500" />
+                        Return
+                    </MenuItem>
+                </MenuItems>
+            </Menu>
+        </div>
+    );
+}

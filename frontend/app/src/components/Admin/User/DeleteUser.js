@@ -1,15 +1,18 @@
+import Cookie from "js-cookie";
 import axios from "axios";
 import { BACKEND_URL } from "../../../config";
 
 export const deleteUser = async ( User ) => {
 
     try {
+        const token = Cookie.get("access_token");
         const {data} = await axios.delete(`${BACKEND_URL}/delete_user`, 
         {
             params: {
                 user_id: User.id, 
             },
             headers: {
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
             withCredentials: true,

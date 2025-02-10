@@ -1,9 +1,10 @@
 import React, { useEffect, useState }  from "react";
 import { getOrderStatus, Action } from "./libs/helpers";
-import { deleteBook, returnBooks } from "./Admin/Book";
+import { deleteBook, getBorrowedBooks, returnBooks } from "./Admin/Book";
 
-function BookTable( {onEdit} ) {
+function BookTable( {onEdit, onBorrow, getData} ) {
     const [books, setBooks] = useState([]);
+    const [borrowedBooks, setBorrowedBooks] = useState([]);
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -18,12 +19,33 @@ function BookTable( {onEdit} ) {
         fetchBooks();
     }, []);
 
+    useEffect(() => {
+        const fetchBorrowedBooks = async () => {
+            const data = await getBorrowedBooks();
+            if (Array.isArray(data)) {
+                setBorrowedBooks(data);
+            } else {
+                console.error("Invalid data structure from API:", data);
+                setBorrowedBooks([]);
+            }
+        };
+        fetchBorrowedBooks();
+    }, []);
+
+    useEffect(() => {
+        if (books.length > 0 || borrowedBooks.length > 0) {
+          const validBooks = Array.isArray(books) ? books : [0];
+          const validBorrowedBooks = Array.isArray(borrowedBooks) ? borrowedBooks : [0];
+          getData([validBooks.length, validBorrowedBooks.length]);
+        }
+      }, [books, borrowedBooks, getData]);
+
     const handleEdit = (book) => {
         onEdit(book);
     };
 
     const handleBorrow = (book) => {
-        console.log("Borrowing:", book); // Perform borrow logic here
+        onBorrow(book);
     };
 
     const handleDelete = (book) => {
@@ -38,6 +60,7 @@ function BookTable( {onEdit} ) {
             <table className="w-full text-gray-700">
                 <thead>
                     <tr className="font-bold">
+                        <td>#</td>
                         <td>ID</td> 
                         <td>Author</td> 
                         <td className="expand">Title</td> 
@@ -48,10 +71,11 @@ function BookTable( {onEdit} ) {
                     </tr>
                 </thead>
                 <tbody>
-                    {Array.isArray(books) && 
-                     books.map((book) => (
+                    {Array.isArray(books) &&
+                     books.map((book, index) => (
                         <tr key={book.id}>
-                            <td>#{book.id}</td>
+                            <td>{index+1}</td>
+                            <td>{book.id}</td>
                             <td>{book.author}</td> 
                             <td><a href={`https://${book.link}`}
                                    target="_blank"

@@ -2,7 +2,8 @@ import React from "react";
 import {GiBookCover, GiWhiteBook} from "react-icons/gi";
 
 
-function DashboardBooksGrid( {totalBooks} ) {
+function DashboardBooksGrid( {booksData} ) {
+  const processedBooksData = Array.isArray(booksData) && booksData.length === 2 ? booksData : [0, 0];
   return (
     <div className="flex gap-4 w-1/2">
         <BoxWrapper>
@@ -12,7 +13,7 @@ function DashboardBooksGrid( {totalBooks} ) {
           <div className="pl-4">
             <span className="text-sm text-gray-500 font-light">Total Books</span>
             <div className="flex items-center">
-              <strong className="text-xl text-gray-700 font-semibold">{totalBooks}</strong>
+              <strong className="text-xl text-gray-700 font-semibold">{processedBooksData[0][0]}</strong>
             </div>
           </div>
         </BoxWrapper>
@@ -23,7 +24,7 @@ function DashboardBooksGrid( {totalBooks} ) {
           <div className="pl-4">
             <span className="text-sm text-gray-500 font-light">My Books</span>
             <div className="flex items-center">
-              <strong className="text-xl text-gray-700 font-semibold">0</strong>
+              <strong className="text-xl text-gray-700 font-semibold">{processedBooksData[0][1]}</strong>
             </div>
           </div>
         </BoxWrapper>

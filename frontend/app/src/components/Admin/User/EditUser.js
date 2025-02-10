@@ -1,22 +1,29 @@
+import Cookie from "js-cookie";
 import axios from "axios";
 import { BACKEND_URL } from "../../../config";
 
 export const editUser = async (
     userId,
+    user_name,
     password,
+    is_superuser
     ) => {
 
     const payload = {
-        password: password
+        user_name: user_name,
+        password: password,
+        is_superuser: is_superuser
     };
 
     try {
+        const token = Cookie.get("access_token");
         const {data} = await axios.patch(`${BACKEND_URL}/update_user`, payload, 
         {
             params: {
                 user_id: userId, 
             },
             headers: {
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
             withCredentials: true,
