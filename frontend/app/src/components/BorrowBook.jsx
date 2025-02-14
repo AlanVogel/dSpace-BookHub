@@ -1,26 +1,64 @@
-import React, { useEffect, useState }  from "react";
-import { getBorrowedBooks } from "./Admin/Book";
-import { getOrderStatus, BookAction } from "./libs/helpers"; 
+import React, { useContext, useEffect, useState }  from "react";
+import { getBorrowedBooks, returnBooks } from "./Admin/Book";
+import { BookAction, highlightText, Pagination, SearchContext } from "./libs/helpers"; 
 
-function BorrowBook( {onReturn} ) {
-  const [books, setBooks] = useState([]);
+function BorrowBook( {onReturn, getData} ) {
+  const [totalBooks, setTotalBooks] = useState([]);
+  const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const {searchQuery} = useContext(SearchContext);
       
-      useEffect(() => {
-          const fetchBorrowedBooks = async () => {
-              const data = await getBorrowedBooks();
-              if (Array.isArray(data)) {
-                  setBooks(data);
-              } else {
-                  console.error("Invalid data structure from API:", data);
-                  setBooks([]);
-              }
-          };
-          fetchBorrowedBooks();
-      }, []);
+  useEffect(() => {
+    const fetchBorrowedBooks = async () => {
+      const borrowBooksData = await getBorrowedBooks();
+      if (Array.isArray(borrowBooksData)) {
+        setBorrowedBooks(borrowBooksData);
+      } else {
+        console.error("Invalid data structure from API:", borrowBooksData);
+        setBorrowedBooks([]);
+      }
+    };
+    fetchBorrowedBooks();
+  }, []);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      const allBooksData = await returnBooks();
+      if (Array.isArray(allBooksData)) {
+        setTotalBooks(allBooksData);
+      } else {
+        console.error("Invalid data structure from API:", allBooksData);
+        setTotalBooks([]);
+      }
+    };
+    fetchBooks();
+  }, []);
+
+  useEffect(() => {
+    if (totalBooks.length > 0 || borrowedBooks.length > 0) {
+      const validBooks = Array.isArray(totalBooks) ? totalBooks : [0];
+      const validBorrowedBooks = Array.isArray(borrowedBooks) ? borrowedBooks : [0];
+      getData([validBooks.length, validBorrowedBooks.length]);
+    }
+  }, [totalBooks, borrowedBooks, getData]);
+
+  const filteredBooks = borrowedBooks.filter((book) =>
+    book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   
-      const handleReturnBook = (book) => {
-        onReturn(book);
-      };
+  const totalPages = Math.ceil(filteredBooks.length / rowsPerPage);
+  const paginatedBooks = filteredBooks.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const handleReturnBook = (book) => {
+    onReturn(book);
+  };
 
     return (
       <div className="bg-white px-4 pt-3 pb-4 rounded-sm border border-gray-200 flex-1 overflow-visible">
@@ -40,20 +78,21 @@ function BorrowBook( {onReturn} ) {
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.isArray(books) && 
-                    books.map((book, index) => (
+                    {Array.isArray(borrowedBooks) && 
+                    paginatedBooks.map((book, index) => (
                       <tr key={book.id}>
-                        <td>{index+1}</td>
+                        <td>{(currentPage-1) * rowsPerPage + index + 1}</td>
+                        {/*<td>{index+1}</td>*/}
                         <td>{book.book_id}</td>
-                        <td>{book.author}</td> 
+                        <td>{highlightText(book.author, searchQuery)}</td> 
                         <td><a href={`https://${book.link}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="underline underline-offset-4
                               hover:text-blue-500">
-                              {book.title}</a></td> 
-                        <td>{book.topic}</td> 
-                        <td>{book.category}</td>
+                              {highlightText(book.title, searchQuery)}</a></td> 
+                        <td>{highlightText(book.topic, searchQuery)}</td> 
+                        <td>{highlightText(book.category, searchQuery)}</td>
                         <td>{book.location}</td>
                         <td>
                           <BookAction
@@ -63,6 +102,16 @@ function BorrowBook( {onReturn} ) {
                     ))}
                   </tbody>
                 </table>
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={filteredBooks.length}
+                  rowsPerPage={rowsPerPage}
+                  onPageChange={(page) => setCurrentPage(Math.max(1, Math.min(page, totalPages)))}
+                  onRowsPerPageChange={(rows) => {
+                    setRowsPerPage(rows);
+                    setCurrentPage(1);
+                  }}
+                  />
               </div>
           </div>
     )

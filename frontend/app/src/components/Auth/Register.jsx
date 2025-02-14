@@ -45,26 +45,6 @@ export function Register() {
                 }
             }
         }
-        /*await axios.post("/signup", {
-            name: name,
-            email: email,
-            password: password,
-            confirmPassword: confirmPassword
-        }).then(res => {
-            // use js-cookie to fecth the data from backend 
-            document.cookie = `token=${res.data.token}`
-            document.cookie = `userID=${res.data.userID}`
-            navigate("/")
-            setError("")
-        }).catch(err => {
-            alert(`Register error`)
-            setName("")
-            setEmail("")
-            setPassword("")
-            setConfirmPassword("")
-            console.log(err)
-        })*/
-
     }
 
     return isAuthenticated() ? (

@@ -1,10 +1,14 @@
-import React, { useEffect, useState }  from "react";
-import { getOrderStatus, Action } from "./libs/helpers";
+import React, { useContext, useEffect, useState }  from "react";
+import { getOrderStatus, Action, Pagination, highlightText } from "./libs/helpers";
 import { deleteBook, getBorrowedBooks, returnBooks } from "./Admin/Book";
+import { SearchContext } from "./libs/helpers";
 
 function BookTable( {onEdit, onBorrow, getData} ) {
     const [books, setBooks] = useState([]);
     const [borrowedBooks, setBorrowedBooks] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const {searchQuery} = useContext(SearchContext);
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -40,6 +44,19 @@ function BookTable( {onEdit, onBorrow, getData} ) {
         }
       }, [books, borrowedBooks, getData]);
 
+    const filteredBooks = books.filter((book) =>
+        book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filteredBooks.length / rowsPerPage);
+    const paginatedBooks = filteredBooks.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+    );
+
     const handleEdit = (book) => {
         onEdit(book);
     };
@@ -72,19 +89,20 @@ function BookTable( {onEdit, onBorrow, getData} ) {
                 </thead>
                 <tbody>
                     {Array.isArray(books) &&
-                     books.map((book, index) => (
+                     paginatedBooks.map((book, index) => (
                         <tr key={book.id}>
-                            <td>{index+1}</td>
+                            <td>{(currentPage - 1) * rowsPerPage + index + 1}</td>
+                            {/*<td>{index+1}</td>*/}
                             <td>{book.id}</td>
-                            <td>{book.author}</td> 
+                            <td>{highlightText(book.author, searchQuery)}</td> 
                             <td><a href={`https://${book.link}`}
                                    target="_blank"
                                    rel="noopener noreferrer"
                                    className="underline underline-offset-4
                                     hover:text-blue-500">
-                                {book.title}</a></td> 
-                            <td>{book.topic}</td> 
-                            <td>{book.category}</td>
+                                {highlightText(book.title, searchQuery)}</a></td> 
+                            <td>{highlightText(book.topic, searchQuery)}</td> 
+                            <td>{highlightText(book.category, searchQuery)}</td>
                             <td>{getOrderStatus(book.status)}</td>
                             <td>
                                 <Action 
@@ -96,6 +114,16 @@ function BookTable( {onEdit, onBorrow, getData} ) {
                     ))}
                 </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredBooks.length}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(page) => setCurrentPage(Math.max(1, Math.min(page, totalPages)))}
+              onRowsPerPageChange={(rows) => {
+                setRowsPerPage(rows);
+                setCurrentPage(1); // Reset to the first page when rows per page changes
+                }}
+            />
         </div>
     </div>
   )

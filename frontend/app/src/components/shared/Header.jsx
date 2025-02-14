@@ -1,11 +1,13 @@
-import React, { Fragment } from 'react'
-import { Menu, Popover, Transition, PopoverButton, PopoverPanel, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { HiOutlineBell, HiOutlineSearch, HiOutlineChatAlt } from 'react-icons/hi'
-import { useNavigate } from 'react-router-dom'
-import classNames from 'classnames'
+import React, { Fragment, useContext } from "react";
+import { Menu, Popover, Transition, PopoverButton, PopoverPanel, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { HiOutlineBell, HiOutlineSearch, HiOutlineChatAlt } from "react-icons/hi";
+import { useNavigate } from "react-router-dom";
+import classNames from "classnames";
+import { SearchContext } from "../libs/helpers";
 
 export default function Header() {
 	const navigate = useNavigate()
+	const {searchQuery, setSearchQuery} = useContext(SearchContext);
 
 	return (
 		<div className="bg-white h-16 px-4 flex items-center border-b border-gray-200 justify-between">
@@ -15,6 +17,8 @@ export default function Header() {
 					type="text"
 					placeholder="Search..."
 					className="text-sm focus:outline-none active:outline-none border border-gray-300 w-[24rem] h-10 pl-11 pr-4 rounded-sm"
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
 				/>
 			</div>
 			<div className="flex items-center gap-2 mr-2">

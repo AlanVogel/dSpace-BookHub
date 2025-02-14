@@ -7,10 +7,12 @@ import Dashboard from "./components/Dashboard";
 import Logout from "./components/Auth/Logout";
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import BorrowBookDashboard from "./components/BorrowBookDashboard";
+import { SearchProvider } from "./components/libs/helpers";
 
 
 function App() {
   return (
+    <SearchProvider>
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -23,6 +25,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+    </SearchProvider>
   );
 }
 
