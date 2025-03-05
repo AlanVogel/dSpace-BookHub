@@ -1,9 +1,10 @@
 from fastapi import status
 from sqlalchemy import case, asc
+from sqlalchemy.sql import func
 from sqlalchemy.orm import Session
 from datetime import datetime
 from database.model.book import Book, BookCopy
-from database.model.user import UserBook
+from database.model.user import User, UserBook
 from database.providers.user import UserProvider
 from database.schemas import book
 from router.helper.router_msg import error_exception
@@ -17,11 +18,15 @@ class BookProvider:
             case(
                 (BookCopy.borrowed_by != None, "UNAVAILABLE"),
                 else_="AVAILABLE"
-            ).label("status")
-        ).outerjoin(BookCopy, Book.id == BookCopy.book_id).order_by(asc(Book.id)).all()
+            ).label("status"),
+            func.coalesce(BookCopy.location, "Unknown").label("location"),
+            func.coalesce(User.email, "Unknown").label("borrowed_by")
+        ).outerjoin(BookCopy, Book.id == BookCopy.book_id) \
+         .outerjoin(User, BookCopy.borrowed_by == User.id) \
+         .order_by(asc(Book.id)).all()
 
         books = []
-        for book, status in books_with_status:
+        for book, status, location, borrowed_by in books_with_status:
             books.append({
                 "id": book.id,
                 "author": book.author,
@@ -29,7 +34,9 @@ class BookProvider:
                 "topic": book.topic,
                 "category": book.category,
                 "link": book.link,
-                "status": status
+                "status": status,
+                "location": location,
+                "borrowed_by": borrowed_by if status == "UNAVAILABLE" else None
             })
         return books
 

@@ -1,5 +1,5 @@
 import typing as t
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class Book(BaseModel):
     author: str
@@ -11,9 +11,22 @@ class Book(BaseModel):
     class Config:
         from_attributes = True
 
-class BookResponse(Book):
+class Borrowed(BaseModel):
+    location: t.Optional[str] = None
+
+    class Config:
+        from_attributes: True
+
+class Returned(Borrowed):
+    pass
+
+    class Config:
+        from_attributes: True
+
+class BookResponse(Book, Borrowed):
     id: int
     status: str
+    borrowed_by: t.Optional[EmailStr] = None
 
 class BookEdit(BaseModel):
     author: t.Optional[str] = None
@@ -25,14 +38,3 @@ class BookEdit(BaseModel):
     class Config:
         from_attributes = True
 
-class Borrowed(BaseModel):
-    location: str 
-
-    class Config:
-        from_attributes: True
-
-class Returned(Borrowed):
-    pass
-
-    class Config:
-        from_attributes: True

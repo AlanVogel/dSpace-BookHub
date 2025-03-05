@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState }  from "react";
-import { getOrderStatus, Action, Pagination, highlightText } from "./libs/helpers";
+import { OrderStatus, Action, Pagination, highlightText } from "./libs/helpers";
 import { deleteBook, getBorrowedBooks, returnBooks } from "./Admin/Book";
 import { SearchContext } from "./libs/helpers";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 
 function BookTable( {onEdit, onBorrow, getData} ) {
     const [books, setBooks] = useState([]);
@@ -9,6 +10,9 @@ function BookTable( {onEdit, onBorrow, getData} ) {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const {searchQuery} = useContext(SearchContext);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedBook, setSelectedBook] = useState(null);
+
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -57,6 +61,16 @@ function BookTable( {onEdit, onBorrow, getData} ) {
         currentPage * rowsPerPage
     );
 
+    const openDialog = (book) => {
+        setSelectedBook(book);
+        setIsDialogOpen(true);
+      };
+      
+    const closeDialog = () => {
+        setIsDialogOpen(false);
+        setSelectedBook(null);
+    };
+      
     const handleEdit = (book) => {
         onEdit(book);
     };
@@ -103,7 +117,14 @@ function BookTable( {onEdit, onBorrow, getData} ) {
                                 {highlightText(book.title, searchQuery)}</a></td> 
                             <td>{highlightText(book.topic, searchQuery)}</td> 
                             <td>{highlightText(book.category, searchQuery)}</td>
-                            <td>{getOrderStatus(book.status)}</td>
+                            <td>
+                                <OrderStatus
+                                    status={book.status}
+                                    location={book.location}
+                                    borrowedBy={book.borrowedBy}
+                                    onClick={() => openDialog(book)}
+                                />
+                            </td>
                             <td>
                                 <Action 
                                 onBorrow={() => handleBorrow(book)}  
@@ -125,6 +146,33 @@ function BookTable( {onEdit, onBorrow, getData} ) {
                 }}
             />
         </div>
+        {isDialogOpen && selectedBook && ( 
+        <Dialog open={isDialogOpen} onClose={closeDialog} className="fixed z-10
+          left-0 top-0 w-full h-full flex items-center justify-center bg-black/[0.4]">
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="max-w-lg space-y-4 border rounded-md bg-white p-12">
+              <DialogTitle className="font-bold text-center md:text-2xl">Book Details</DialogTitle>
+              <p>
+                <strong className="mb-2 text-base font-medium">Location:</strong> {selectedBook.location}
+              </p>
+              {selectedBook.status === "UNAVAILABLE" && (
+                <p>
+                  <strong className="mb-2 text-base font-medium">Borrowed by:</strong> {selectedBook.borrowed_by || "Unknown"}
+                </p>
+              )}
+              <div className="flex gap-4">
+                <button
+                  onClick={closeDialog}
+                  className="w-full text-white bg-primary-600 hover:bg-primary-700 
+                   focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center
+                   dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                >
+                  Close
+                </button>
+              </div>
+            </DialogPanel>
+          </div>
+        </Dialog>)}
     </div>
   )
 }

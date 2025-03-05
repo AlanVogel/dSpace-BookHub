@@ -1,6 +1,6 @@
-import Cookie from "js-cookie"
-import axios from "axios";
-import { BACKEND_URL } from "../config";
+import Cookie from "js-cookie";
+import { toast } from "react-toastify";
+import api from "./api";
 
 export const isAuthenticated = () => {
     const permissions = Cookie.get("permission");
@@ -21,16 +21,19 @@ export const login = async (email, password) => {
     formData.append("password", password);
 
     try {
-        const {data} = await axios.post(`${BACKEND_URL}/login`, formData, {
+        const {data} = await api.post("/login", formData, {
             headers: {"Content-Type": "multipart/form-data"},
-            withCredentials: true,
         });
+        toast.success("Logged in successfully!");
         return data;
     } catch (error) {
         if (error.response) {
+            const errorMsg = error.response.data?.detail || "Login error";
+            toast.error(errorMsg);
             console.error("Validation Error Response:", error.response.data);
             console.error("Status:", error.response.status);
         } else {
+            toast.error("Request Error:", error.message);
             console.error("Request Error:", error.message);
         }
     }
@@ -67,16 +70,19 @@ export const signup = async (
     };
 
     try {
-        const {data} = await axios.post(`${BACKEND_URL}/signup`, payload, {
+        const {data} = await api.post("/signup", payload, {
             headers: {"Content-Type": "application/json"},
-            withCredentials: true,
         });
+        toast.success("Signed up successfully!");
         return data;
     } catch (error) {
         if (error.response) {
+            const errorMsg = error.response.data?.detail || "Signup error";
+            toast.error(errorMsg);
             console.error("Validation Error Response:", error.response.data);
             console.error("Status:", error.response.status);
         } else {
+            toast.error("Request Error: " + error.message);
             console.error("Request Error:", error.message);
         }
     }
@@ -85,10 +91,17 @@ export const signup = async (
 
 export const logout = async () => {
     try {
-        const response = await axios.post(`${BACKEND_URL}/logout`, {}, { withCredentials: true });
-        console.log(response.data.details);
-        window.location.reload();
+        const response = await api.post("/logout", {});
+        //window.location.reload();
+        toast.info(response.data.detail || "Logged out successfully!");
     } catch (error) {
-        console.error("Failed to log out:", error.response?.data || error.message);
+        if (error.response) {
+            const errorMsg = error.response.data?.detail || "Logout error";
+            toast.error(errorMsg);
+            console.error("Failed to log out:", error.response.data);
+        } else {
+            toast.error("Request Error: " + error.message);
+            console.error("Failed to log out:", error.message);
+        }
     }
 };

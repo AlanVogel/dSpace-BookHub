@@ -1,22 +1,14 @@
-export function getOrderStatus(status) {
-    switch(status) {
-        case "AVAILABLE":
-            return (
-                <span className="capitalize py-1 px-2 rounded-md text-xs text-sky-600 bg-sky-100">
-                    {status.replaceAll("_","").toLowerCase()}
-                </span>
-            )
-        case "UNAVAILABLE":
-            return (
-                <span className="capitalize py-1 px-2 rounded-md text-xs text-orange-600 bg-orange-100">
-                    {status.replaceAll("_","").toLowerCase()}
-                </span>
-            )
-        default:
-            return (
-                <span className="capitalize py-1 px-2 rounded-md text-xs text-gray-600 bg-gray-100">
-                    {status.replaceAll("_","").toLowerCase()}
-                </span>
-            )
-    }
+export function OrderStatus({ status, location, borrowedBy, onClick }) {
+    return (
+      <div className="relative inline-block">
+        <button
+          onClick={onClick}
+          className={`capitalize py-1 px-2 rounded-md text-xs transition-all duration-200
+            ${status === 'AVAILABLE' ? 'text-sky-600 bg-sky-100' : 'text-orange-600 bg-orange-100'}
+            hover:bg-opacity-80 focus:outline-none`}
+        >
+          {status.toLowerCase()}
+        </button>
+      </div>
+    );
 }

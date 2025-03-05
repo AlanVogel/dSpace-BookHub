@@ -1,6 +1,6 @@
 import Cookie from "js-cookie";
-import axios from "axios";
-import { BACKEND_URL } from "../../../config";
+import { toast } from "react-toastify";
+import api from "../../../utils/api";
 
 export const addBook = async (
     author,
@@ -36,20 +36,22 @@ export const addBook = async (
 
     try {
         const token = Cookie.get("access_token");
-        const {data} = await axios.post(`${BACKEND_URL}/add_book`, payload, {
+        const {data} = await api.post("/add_book", payload, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
-            withCredentials: true,
         });
-        console.log("Book successfully added:", data);
+        toast.success("Book successfully added!");
         return data;
     } catch (error) {
         if (error.response) {
+            const errMsg = error.response.data?.detail || "Adding Book Error";
+            toast.error(errMsg);
             console.error("Validation Error Response:", error.response.data);
             console.error("Status:", error.response.status);
         } else {
+            toast.error("Request Error:", error.message);
             console.error("Request Error:", error.message);
         }
     }

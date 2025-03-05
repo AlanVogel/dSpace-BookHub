@@ -1,14 +1,11 @@
 import Cookie from "js-cookie"
-import axios from "axios";
-import { BACKEND_URL } from "../../../config";
+import api from "../../../utils/api";
 
 export const getBorrowedBooks = async () => {
 
     try {
         const token = Cookie.get("access_token");
-        const { data } = await axios.get(`${BACKEND_URL}/borrowed_books`, {
-            withCredentials: true,
-
+        const { data } = await api.get("/borrowed_books", {
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",

@@ -2,6 +2,7 @@ from database.config import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import (
     Column,
+    Text,
     Integer,
     Unicode,
     ForeignKey,
@@ -15,7 +16,7 @@ class Book(Base):
     title = Column(Unicode(255), nullable=False)
     topic = Column(Unicode(255), nullable=False)
     category = Column(Unicode(255), nullable=False)
-    link = Column(Unicode(255), nullable=False)
+    link = Column(Text, nullable=False)
     #One-to-Many relationship with BookCopy
     copies = relationship("BookCopy", back_populates="book")
 

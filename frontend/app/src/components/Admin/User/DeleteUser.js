@@ -1,12 +1,12 @@
 import Cookie from "js-cookie";
-import axios from "axios";
-import { BACKEND_URL } from "../../../config";
+import { toast } from "react-toastify";
+import api from "../../../utils/api";
 
 export const deleteUser = async ( User ) => {
 
     try {
         const token = Cookie.get("access_token");
-        const {data} = await axios.delete(`${BACKEND_URL}/delete_user`, 
+        const {data} = await api.delete("/delete_user", 
         {
             params: {
                 user_id: User.id, 
@@ -15,15 +15,17 @@ export const deleteUser = async ( User ) => {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
-            withCredentials: true,
         });
-        console.log("User successfully deleted");
+        toast.success("User successfully deleted");
         return data;
     } catch (error) {
         if (error.response) {
-            console.error("Validation Error Response:", error.response.data);
-            console.error("Status:", error.response.status);
+            const errMsg = error.response.data?.detail || "Deleting User Error";
+            toast.error(errMsg);
+            console.error("Validation Error Response: ", error.response.data);
+            console.error("Status: ", error.response.status);
         } else {
+            toast.error("Request Error: ", error.message);
             console.error("Request Error:", error.message);
         }
     }
