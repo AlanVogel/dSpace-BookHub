@@ -1,5 +1,6 @@
 import os
 import openpyxl
+from dotenv import load_dotenv
 from .config import db_session
 from .model.book import Book
 from .model.user import User
@@ -66,20 +67,25 @@ def seed_db_from_excel():
         session.close()
 
 def create_sudo_user():
-    user = {
-        "user_name": "admin",
-        "email": "admin@dspace.hr",
-        "password": "Sudo007+",
-        "is_superuser": True
-    }
+
+    load_dotenv()
+    user_name = os.getenv("SUDO_USER_NAME")
+    email = os.getenv("SUDO_USER_EMAIL")
+    password = os.getenv("SUDO_USER_PASSWORD")
+    is_superuser = os.getenv("SUDO_USER_IS_SUPERUSER") == "True" 
+
+    if not user_name or not email or not password:
+        print("Error: Missing sudo user details in .env")
+        return
+    
     session = db_session()
 
     try:
         new_user = User(
-            user_name = user.get("user_name"), 
-            hashed_password = get_password_hash(user.get("password")),
-            email = user.get("email"),
-            is_superuser = user.get("is_superuser")
+            user_name = user_name, 
+            hashed_password = get_password_hash(password),
+            email = email,
+            is_superuser = is_superuser
         )
         session.add(new_user)
         session.commit()
