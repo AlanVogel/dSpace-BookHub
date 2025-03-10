@@ -30,9 +30,11 @@ async def db_session_middleware(request: Request, call_next):
     request.state.db.close()
     return response"""
 
+ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ORIGINS", "").split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["http://localhost:3000"],
+    allow_origins = ALLOWED_ORIGINS,
     allow_credentials = True,
     allow_methods = ["*"],
     allow_headers = ["*"],
