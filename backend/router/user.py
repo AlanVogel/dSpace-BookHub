@@ -24,7 +24,7 @@ from .helper.utils import (
 )
 
 load_dotenv()
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 
 @router.post("/signup")

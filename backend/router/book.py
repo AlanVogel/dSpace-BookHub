@@ -17,7 +17,7 @@ from .helper.router_msg import (
     ok_response
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 
 @router.post("/add_book")

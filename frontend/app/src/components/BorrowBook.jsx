@@ -85,7 +85,7 @@ function BorrowBook( {onReturn, getData} ) {
                         {/*<td>{index+1}</td>*/}
                         <td>{book.book_id}</td>
                         <td>{highlightText(book.author, searchQuery)}</td> 
-                        <td><a href={`https://${book.link}`}
+                        <td><a href={book.link}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="underline underline-offset-4

@@ -10,7 +10,7 @@ from database.config import db_session, ini_db, drop_db
 from database.seed_data import seed_db_from_excel, create_sudo_user
 
 load_dotenv()
-#drop_db()
+drop_db()
 ini_db()
 
 @asynccontextmanager
