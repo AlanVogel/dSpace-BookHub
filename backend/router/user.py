@@ -20,7 +20,8 @@ from .helper.router_msg import (
 from .helper.utils import (
     authenticate_user, 
     create_access_token,
-    get_current_active_superuser
+    get_current_active_superuser,
+    verify_access_token
 )
 
 load_dotenv()
@@ -29,12 +30,12 @@ router = APIRouter(prefix="/api")
 
 @router.post("/signup")
 def signup(response: Response,
-           form_data: RegisterUser, #= Depends(make_dependable(RegisterUser)), this is for JSON/FORM data 
+           form_data: RegisterUser, 
            db = Depends(get_db)):
     user = UserProvider.get_user_by_email(db = db, 
                                           email= form_data.email["email"])
     if user:
-        return error_exception(
+        raise error_exception(
             status_code = status.HTTP_409_CONFLICT,
             details = "Account already exist",
             headers = {"WWW-Authenticate":"Bearer"}
@@ -43,7 +44,7 @@ def signup(response: Response,
                                                 db = db)
     if db_name:
         if db_name.user_name == form_data.user_name:
-            return error_exception(
+            raise error_exception(
                 status_code= status.HTTP_409_CONFLICT,
                 details= "Name already taken",
                 headers= {"WWW-Authenticate":"Bearer"}
@@ -72,8 +73,8 @@ async def login(response: Response, db = Depends(get_db),
     user = authenticate_user(db= db, email= form_data.username, 
                              password= form_data.password)
     if not user:
-        return error_exception(
-            status_code = status.HTTP_401_UNAUTHORIZED,
+        raise error_exception(
+            status_code = status.HTTP_404_NOT_FOUND,
             details = "Incorret username or password",
             headers = {"WWW-Authenticate":"Bearer"})
     if user.is_superuser:
@@ -96,12 +97,25 @@ async def logout(response: Response):
     return ok_response(status_code=status.HTTP_204_NO_CONTENT,
                        details="Successfully logged out")
 
+@router.get("/user_info")
+def get_user_info(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        return {"error": "Unauthorized"}
+
+    try:
+        token = token.replace("Bearer ", "")
+        payload = verify_access_token(token)
+        return {"permission": payload.get("permission", "unknown")}
+    except Exception as e:
+        return {"error": "Invalid token"}
+
 @router.get("/get_user/{user_id}")
 async def user_details(user_id: int, db = Depends(get_db),
                        current_user = Depends(get_current_active_superuser)):
     user = UserProvider.get_user_by_id(user_id = user_id, db = db)
     if not user:
-        return error_exception(
+        raise error_exception(
             status_code = status.HTTP_404_NOT_FOUND,
             details = "User doesn't exist",
             headers = {"WWW-Authenticate":"Bearer"}
@@ -116,7 +130,7 @@ async def get_users(db = Depends(get_db),
                     current_user = Depends(get_current_active_superuser)):
     users = UserProvider.get_all_users(db = db)
     if not users:
-        return error_exception(
+        raise error_exception(
             status_code= status.HTTP_404_NOT_FOUND,
             details = "Users doesn't exist",
             headers = {"WWW-Authenticate": "Bearer"}

@@ -1,6 +1,6 @@
 import React, {useState} from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
-import { isAuthenticated, login } from "../../utils/auth";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../../utils/auth";
 
 export const Login = () => {
     const navigate = useNavigate();
@@ -27,9 +27,7 @@ export const Login = () => {
     }
    };
 
-    return isAuthenticated() ? (
-        <Navigate to="/" />
-    ) : (
+    return (
         <section className="bg-gray-50 dark:bg-gray-900">
             <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
                 <h1 className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
@@ -60,7 +58,7 @@ export const Login = () => {
                             {error && <p style={{color: "red"}}>{error}</p>}
                             <button type="submit" className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:outline-none
                              focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700
-                             dark:focus:ring-primary-800" onClick={handleSubmit}>Sign in</button>
+                             dark:focus:ring-primary-800">Sign in</button>
                             <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                              Don't have an acoount yet?
                              <Link to={"/register"} className="font-medium text-primary-600 hover:underline dark:text-primary-500" ml-1> Sign up</Link>

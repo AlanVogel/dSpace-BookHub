@@ -2,8 +2,22 @@ import Cookie from "js-cookie";
 import { toast } from "react-toastify";
 import api from "./api";
 
+export const getUserRole = async () => {
+    try {
+        const response = await api.get("/user_info", {
+            headers: {
+            "Content-Type": "application/json",
+            }
+        });
+        return response.data.permission || "";
+    } catch (error) {
+        console.error("Failed to get user role:", error);
+        return "";
+    }
+};
+
 export const isAuthenticated = () => {
-    const permissions = Cookie.get("permission");
+    const permissions = Cookie.get("access_token");
     if(!permissions) {
         return false;
     }
@@ -27,15 +41,7 @@ export const login = async (email, password) => {
         toast.success("Logged in successfully!");
         return data;
     } catch (error) {
-        if (error.response) {
-            const errorMsg = error.response.data?.detail || "Login error";
-            toast.error(errorMsg);
-            console.error("Validation Error Response:", error.response.data);
-            console.error("Status:", error.response.status);
-        } else {
-            toast.error("Request Error:", error.message);
-            console.error("Request Error:", error.message);
-        }
+        toast.error(error.response.data?.detail, { autoClose: 3000 });
     }
 };
 
@@ -92,8 +98,7 @@ export const signup = async (
 export const logout = async () => {
     try {
         const response = await api.post("/logout", {});
-        //window.location.reload();
-        toast.info(response.data.detail || "Logged out successfully!");
+        toast.info(response.data.info.data.details);
     } catch (error) {
         if (error.response) {
             const errorMsg = error.response.data?.detail || "Logout error";

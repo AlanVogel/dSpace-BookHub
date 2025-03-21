@@ -53,11 +53,11 @@ function Employee( {onEdit, getData} ) {
     <div className="bg-white px-4 pt-3 pb-4 rounded-sm border border-gray-200 flex-1 overflow-visible">
             <strong className="text-gray-700 font-medium">All Employees</strong>
             <div className="mt-3 border-x rounded-sm border-gray-200">
-                <table className="w-full text-gray-700">
+                <table className="w-full text-center text-gray-700">
                     <thead>
                         <tr className="font-bold">
                             <td>#</td>
-                            <td>ID</td> 
+                            {/*<td>ID</td>*/} 
                             <td>Name</td> 
                             <td>Email</td> 
                             <td>Password</td> 
@@ -72,7 +72,7 @@ function Employee( {onEdit, getData} ) {
                             <tr key={user.id}>
                                 <td>{(currentPage - 1) * rowsPerPage + index + 1}</td>
                                 {/*<td>{index+1}</td>*/}
-                                <td>{user.id}</td>
+                                {/*<td>{user.id}</td>*/}
                                 <td>{highlightText(user.user_name, searchQuery)}</td>
                                 <td>{highlightText(user.email, searchQuery)}</td> 
                                 <td>{user.hashed_password}</td>

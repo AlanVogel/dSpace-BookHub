@@ -88,11 +88,11 @@ function BookTable( {onEdit, onBorrow, getData} ) {
     <div className="bg-white px-4 pt-3 pb-4 rounded-sm border border-gray-200 flex-1 overflow-visible">
         <strong className="text-gray-700 font-medium">All Books</strong>
         <div className="mt-3 border-x rounded-sm border-gray-200">
-            <table className="w-full text-gray-700">
+            <table className="w-full text-center text-gray-700">
                 <thead>
                     <tr className="font-bold">
                         <td>#</td>
-                        <td>ID</td> 
+                        {/*<td>ID</td>*/} 
                         <td>Author</td> 
                         <td className="expand">Title</td> 
                         <td>Topic</td> 
@@ -107,7 +107,7 @@ function BookTable( {onEdit, onBorrow, getData} ) {
                         <tr key={book.id}>
                             <td>{(currentPage - 1) * rowsPerPage + index + 1}</td>
                             {/*<td>{index+1}</td>*/}
-                            <td>{book.id}</td>
+                            {/*<td>{book.id}</td>*/}
                             <td>{highlightText(book.author, searchQuery)}</td> 
                             <td><a href={book.link}
                                    target="_blank"

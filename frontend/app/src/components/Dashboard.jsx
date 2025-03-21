@@ -1,13 +1,20 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import DashboardBooksGrid from "./DashboardBooksGrid";
 import BookTable from "./BookTable";
 import { Modal, StatusBookModal } from "./libs/helpers/Modal";
+import { getUserRole } from "../utils/auth";
 
 export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editBook, setEditBook] = useState(null);
   const [borrowBook, setBorrowBook] = useState(null);
   const [childBookData, setChildBookData] = useState([]);
+  const [userRole, setUserRole] = useState("");
+  const isDisabled = userRole !== "admin";
+  
+      useEffect(() => {
+          getUserRole().then(setUserRole);
+      }, []);
 
   const handleDataFromBookTable = useCallback((totalBooks, totalBorrowedBooks) => {
     setChildBookData([totalBooks, totalBorrowedBooks]);
@@ -40,12 +47,12 @@ export default function Dashboard() {
         <BookTable onEdit={handleEditBook} onBorrow={handleBorrowBook} getData={handleDataFromBookTable}/>
       </div>
       <div className="flex gap-4 justify-center">
-        <button type="submit" className=" text-white bg-primary-600
-           hover:bg-primary-700 focus:outline-none focus:ring-primary-300 
-           font-medium rounded-lg text-sm py-2.5 w-24
-           dark:bg-primary-600 dark:hover:bg-primary-700
-           dark:focus:ring-primary-800" onClick={handleAddBook}>
-              Add Book
+        <button type="submit" className={`text-white font-medium rounded-lg text-sm py-2.5 w-24 transition 
+            ${isDisabled ? "bg-gray-500 cursor-not-allowed" : "bg-primary-600 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"}
+          `} 
+           onClick={handleAddBook}
+           disabled={isDisabled}>
+            Add Book
         </button>
         {modalOpen && (
             borrowBook ? (

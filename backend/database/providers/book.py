@@ -13,32 +13,35 @@ class BookProvider:
 
     @staticmethod
     def get_all_books(db:Session):
-        books_with_status = db.query(
-            Book,
-            case(
-                (BookCopy.borrowed_by != None, "UNAVAILABLE"),
-                else_="AVAILABLE"
-            ).label("status"),
-            func.coalesce(BookCopy.location, "Unknown").label("location"),
-            func.coalesce(User.email, "Unknown").label("borrowed_by")
-        ).outerjoin(BookCopy, Book.id == BookCopy.book_id) \
-         .outerjoin(User, BookCopy.borrowed_by == User.id) \
-         .order_by(asc(Book.id)).all()
+        try:
+            books_with_status = db.query(
+                Book,
+                case(
+                    (BookCopy.borrowed_by != None, "UNAVAILABLE"),
+                    else_="AVAILABLE"
+                ).label("status"),
+                func.coalesce(BookCopy.location, "Unknown").label("location"),
+                func.coalesce(User.email, "Unknown").label("borrowed_by")
+            ).outerjoin(BookCopy, Book.id == BookCopy.book_id) \
+            .outerjoin(User, BookCopy.borrowed_by == User.id) \
+            .order_by(asc(Book.id)).all()
 
-        books = []
-        for book, status, location, borrowed_by in books_with_status:
-            books.append({
-                "id": book.id,
-                "author": book.author,
-                "title": book.title,
-                "topic": book.topic,
-                "category": book.category,
-                "link": book.link,
-                "status": status,
-                "location": location,
-                "borrowed_by": borrowed_by if status == "UNAVAILABLE" else None
-            })
-        return books
+            books = []
+            for book, status, location, borrowed_by in books_with_status:
+                books.append({
+                    "id": book.id,
+                    "author": book.author,
+                    "title": book.title,
+                    "topic": book.topic,
+                    "category": book.category,
+                    "link": book.link,
+                    "status": status,
+                    "location": location,
+                    "borrowed_by": borrowed_by if status == "UNAVAILABLE" else None
+                })
+            return books
+        except Exception as e:
+            raise error_exception(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details=f"Error fetching books: {str(e)}")
 
     @staticmethod
     def get_book_by_id(book_id: int, db: Session):
@@ -69,61 +72,71 @@ class BookProvider:
     
     @staticmethod
     def add_book(data: dict, db: Session):
-        new_book = Book(author = data.author, 
-                        title = data.title,
-                        topic = data.topic,
-                        category = data.category,
-                        link = data.link)
-        db.add(new_book)
-        db.commit()
-        db.refresh(new_book)
-        return new_book
+        try:
+            new_book = Book(author = data.author, 
+                            title = data.title,
+                            topic = data.topic,
+                            category = data.category,
+                            link = data.link)
+            db.add(new_book)
+            db.commit()
+            db.refresh(new_book)
+            return new_book
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details=f"Error adding book: {str(e)}")
         
     @staticmethod
     def add_status(data: dict, db:Session):
-        new_status = BookCopy(borrowed = data.borrowed,
-                            time_taken = data.time_taken,
-                            time_returned = data.time_taken,
-                            location_taken= data.location_taken,
-                            location_returned = data.location_taken)
-        db.add(new_status)
-        db.commit()
-        db.refresh(new_status)
-        return new_status
+        try:
+            new_status = BookCopy(borrowed = data.borrowed,
+                                time_taken = data.time_taken,
+                                time_returned = data.time_taken,
+                                location_taken= data.location_taken,
+                                location_returned = data.location_taken)
+            db.add(new_status)
+            db.commit()
+            db.refresh(new_status)
+            return new_status
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details=f"Error adding status: {str(e)}")
 
     @staticmethod
     def update_book(book_id: int, db: Session, book_data_form: book.BookEdit):
-        db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
-        if not db_book:
-            raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
-                                  details = "Book not found",
-                                  headers = {"WWW-Authenticate":"Bearer"})
-        update_data = book_data_form.model_dump(exclude_unset=True)
-        #book_data_to_update = ["author", "title", "topic", "category", "link"]
+        try:
+            db_book = BookProvider.get_book_by_id(book_id = book_id, db = db)
+            if not db_book:
+                raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                                      details = "Book not found",
+                                      headers = {"WWW-Authenticate":"Bearer"})
+            update_data = book_data_form.model_dump(exclude_unset=True)
         
-        #for data in book_data_to_update:
-        #    if data in update_data:
-        #        update_data[data] = book_data_form.data
-        #        del update_data[data]
+            for key, value in update_data.items():
+                setattr(db_book, key, value)
         
-        for key, value in update_data.items():
-            setattr(db_book, key, value)
-        
-        db.add(db_book)
-        db.commit()
-        db.refresh(db_book)
-        return db_book
+            db.add(db_book)
+            db.commit()
+            db.refresh(db_book)
+            return db_book
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details=f"Error updating book: {str(e)}")
 
     @staticmethod
     def delete_book(book_id: int, db: Session):
-        db_book = BookProvider.get_book_by_id(book_id = book_id, db=db)
-        if not db_book:
-            raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
-                                  details = "Book not found",
-                                  headers = {"WWW-Authenticate":"Bearer"})
-        db.delete(db_book)
-        db.commit()
-        return db_book
+        try:
+            db_book = BookProvider.get_book_by_id(book_id = book_id, db=db)
+            if not db_book:
+                raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                                      details = "Book not found",
+                                      headers = {"WWW-Authenticate":"Bearer"})
+            db.delete(db_book)
+            db.commit()
+            return db_book
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details=f"Error deleting book: {str(e)}")
 
     @staticmethod
     def borrow_book(user_email: str, book_id: str, 

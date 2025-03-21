@@ -1,0 +1,130 @@
+name: Deploy the app on Windows RDP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: Windows-latest
+    environment: Production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH Connection
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.WINDOWS_SERVER_IP }}
+          username: ${{ secrets.WINDOWS_USERNAME }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          script: |
+            echo "Connected to Windows Server!"
+            echo "Start pulling the latest changes!"
+            cd D:\dSpace-BookHub
+            git pull origin main || (echo "Failed to pull from GitHub" && exit 1)
+            echo "Pulled latest code from GitHub"
+
+      - name: Generate .env File from .env-example
+        uses: appleboy/ssh-action@v0.1.10
+        with: 
+          host: ${{ secrets.WINDOWS_SERVER_IP }}
+          username: ${{ secrets.WINDOWS_USERNAME }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          script: |
+            cd D:\dSpace-BookHub
+            echo "Copying .env-example to .env..."
+            if (!(Test-Path .env-example)) {
+              echo "Error: .env-example file not found!"
+              exit 1
+            }
+            Copy-Item -Path .env-example -Destination .env -Force
+            echo "Replacing placeholder values in .env..."
+            (Get-Content .env) -replace "POSTGRESQL_URL", "${{ secrets.DATABASE_URL }}" | Set-Content .env
+            (Get-Content .env) -replace "TOKEN", "${{ secrets.SECRET_KEY }}" | Set-Content .env
+            (Get-Content .env) -replace "ALGORITHM", "${{ secrets.ALGORITHM }}" | Set-Content .env
+            (Get-Content .env) -replace "ACCESS_TOKEN_EXPIRE_MINUTES", "${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" | Set-Content .env
+            (Get-Content .env) -replace "REACT_APP_BACKEND_URL", "${{ secrets.REACT_APP_BACKEND_URL}}" | Set-Content .env
+            (Get-Content .env) -replace "ORIGINS", "${{ secrets.ORIGINS }}" | Set-Content .env
+            (Get-Content .env) -replace "SUDO_USER_NAME", "${{ secrets.SUDO_USER_NAME }}" | Set-Content .env
+            (Get-Content .env) -replace "SUDO_USER_EMAIL", "${{ secrets.SUDO_USER_EMAIL }}" | Set-Content .env
+            (Get-Content .env) -replace "SUDO_USER_PASSWORD", "${{ secrets.SUDO_USER_PASSWORD }}" | Set-Content .env
+            (Get-Content .env) -replace "SUDO_USER_IS_SUPERUSER", "${{ secrets.SUDO_USER_IS_SUPERUSER }}" | Set-Content .env
+            echo "Generated .env file successfully!"
+
+      - name: Install Dependencies (Backend)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.WINDOWS_SERVER_IP }}
+          username: ${{ secrets.WINDOWS_USERNAME }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          script: |
+            cd D:\dSpace-BookHub
+            echo "Start creating virtual environment!"
+            if (!(Test-Path ".venv")) {
+            echo "Virtual environment not found. Creating .venv..."
+            C:\Users\AlanV\AppData\Local\Programs\Python\Python39\python.exe -m venv .venv 
+            } else {
+            echo "Virtual environment already exists."
+            }
+            echo "Activating virtual environment..."
+            if (!(Test-Path ".venv\Scripts\Activate.ps1")){
+            echo "Failed to find virtual environment activation script."
+            exit 1
+            }
+            .\.venv\Scripts\Activate.ps1
+            echo "Installing dependencies!"
+            pip install -r requirements.txt || (echo "Failed to install backend dependencies" && exit 1)
+            echo "Backend dependencies installed!"
+
+      - name: Install Dependencies and Build (Frontend)
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.WINDOWS_SERVER_IP }}
+          username: ${{ secrets.WINDOWS_USERNAME }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          script: |
+            cd D:\dSpace-BookHub\frontend\app
+            echo "Start installing npm and creating the build!"
+            npm install || (echo "Failed to install frontend dependencies" && exit 1)
+            npm run build || (echo "Failed to build frontend" && exit 1)
+            echo "Frontend built successfully!"
+
+      - name: Restart Backend Service
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.WINDOWS_SERVER_IP }}
+          username: ${{ secrets.WINDOWS_USERNAME }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          script: |
+            taskkill /F /IM uvicorn.exe || echo "Uvicorn not running"
+            cd D:\dSpace-BookHub\backend
+            echo "Activating virtual environment..."
+            .\.venv\Scripts\Activate.ps1
+            echo "Starting FastAPI backend..."
+            Start-Process -NoNewWindow -FilePath "uvicorn" ArgumentList "main:app --host 0.0.0.0 --port 8000" -RedirectStandardOutput "D:\dSpace-BookHub\backend.log" -RedirectStandardError "D:\dSpace-BookHub\backend-error.log"
+            echo "Backend restarted!"
+      
+      - name: Restart Nginx
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.WINDOWS_SERVER_IP }}
+          username: ${{ secrets.WINDOWS_USERNAME }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          script: |
+            nginx -s reload || (echo "Failed to reload Nginx" exit 1)
+            echo "Nginx restarted!"
+      
+      - name: Verify Services
+        uses: appleboy/ssh-action@v0.1.10
+        with: 
+          host: ${{secrets.WINDOWS_SERVER_IP}}
+          username: ${{secrets.WINDOWS_USERNAME}}
+          password: ${{secrets.WINDOWS_PASSWORD}}
+          script: |
+            $serverIP = "${{ secrets.WINDOWS_SERVER_IP }}"
+            curl --fail "http://$serverIP:8000" || (echo "Backend is not running" && exit 1)
+            curl --fail http://$serverIP:3000 || (echo "Frontend is not accessible via Nginx" && exit 1)
+            echo "Services verified!"

@@ -37,42 +37,57 @@ class UserProvider:
     
     @staticmethod
     def update_user_by_id(user_id: int, db: Session, user: user.UserEdit):
-        db_user = UserProvider.get_user_by_id(user_id = user_id, db = db)
-        if not db_user:
-            raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
-                                  details = "User not found",
-                                  headers = {"WWW-Authenticate":"Bearer"})
-        update_data = user.model_dump(exclude_unset=True)
-        update_data = {key: value for key, value in update_data.items() 
-                       if value != ""}
-        for key, value in update_data.items():
-            setattr(db_user, key, value)
+        try:
+            db_user = UserProvider.get_user_by_id(user_id = user_id, db = db)
+            if not db_user:
+                raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                                      details = "User not found",
+                                      headers = {"WWW-Authenticate":"Bearer"})
+            update_data = user.model_dump(exclude_unset=True)
+            update_data = {key: value for key, value in update_data.items() 
+                           if value != ""}
+            for key, value in update_data.items():
+                  setattr(db_user, key, value)
         
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return db_user
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error updating user: {str(e)}")
+
 
     @staticmethod
     def delete_user_by_id(user_id: int, db: Session):
-        db_user = UserProvider.get_user_by_id(user_id = user_id, db = db)
-        if not db_user:
-            raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
-                                  details = "User not found",
-                                  headers = {"WWW-Authenticate":"Bearer"})
-        db.delete(db_user)
-        db.commit()
-        return db_user
+        try:
+            db_user = UserProvider.get_user_by_id(user_id = user_id, db = db)
+            if not db_user:
+                raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
+                                      details = "User not found",
+                                      headers = {"WWW-Authenticate":"Bearer"})
+            db.delete(db_user)
+            db.commit()
+            return db_user
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error deleting user: {str(e)}")
+
          
     @staticmethod
     def add_user(data: dict, db: Session):
-        new_user = User(user_name = data.user_name, 
-                        hashed_password = get_password_hash(data.password),
-                        email = data.email["email"],
-                        is_active = data.is_active,
-                        is_superuser = data.is_superuser)
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return new_user
+        try:
+            new_user = User(user_name = data.user_name, 
+                            hashed_password = get_password_hash(data.password),
+                            email = data.email["email"],
+                            is_active = data.is_active,
+                            is_superuser = data.is_superuser)
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
+            return new_user
+        except Exception as e:
+            db.rollback()
+            raise error_exception(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Error adding user: {str(e)}")
+
         

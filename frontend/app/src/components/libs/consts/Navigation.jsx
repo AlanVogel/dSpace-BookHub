@@ -1,10 +1,10 @@
 import {
 	HiOutlineViewGrid,
-	HiOutlineShoppingCart,
 	HiOutlineUsers,
 	HiOutlineQuestionMarkCircle,
 	HiOutlineCog
-} from 'react-icons/hi'
+} from 'react-icons/hi';
+import { GiBookshelf } from "react-icons/gi";
 
 export const DASHBOARD_SIDEBAR_LINKS = [
 	{
@@ -17,7 +17,7 @@ export const DASHBOARD_SIDEBAR_LINKS = [
 		key: 'books',
 		label: 'MyBooks',
 		path: '/home/books',
-		icon: <HiOutlineShoppingCart />
+		icon: <GiBookshelf />
 	},
 	{
 		key: 'customers',

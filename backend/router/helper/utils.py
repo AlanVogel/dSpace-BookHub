@@ -54,12 +54,28 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, os.getenv("SECRET_KEY"), algorithm = os.getenv("ALGORITHM"))
     return encoded_jwt
 
+def verify_access_token(token: str = Depends(oauth2_sceme)):
+    """
+    Decodes and verifies the JWT access token.
+    Returns the payload if valid, or raises an error if invalid.
+    """
+    try:
+        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+        exp = payload.get("exp")
+
+        if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+            raise JWTError("Token has expired")
+
+        return payload
+    except JWTError as e:
+        raise JWTError(f"Invalid token: {e}")
+
 async def get_current_user(token: str = Depends(oauth2_sceme), db = Depends(get_db)):
     credential_exception = error_exception(status_code=status.HTTP_401_UNAUTHORIZED,
                                            details = "Could not validate credentials",
                                            headers = {"WWW-Authenticate": "Bearer"})
     try:
-        payload = jwt.decode(token, os.getenv("SECRET_KEY"),algorithms = [os.getenv("ALGORITHM")])
+        payload = verify_access_token(token = token)
         email: str = payload.get("sub")
         permission: str = payload.get("permission")
         if email is None:
@@ -86,5 +102,5 @@ async def get_current_active_superuser(current_user: UserInDB = Depends(get_curr
                               details = "Inactive user")
     if not current_user.is_superuser:
         raise error_exception(status_code = status.HTTP_403_FORBIDDEN,
-                              details = "The user doesn't have enough privileges")
+                              details = "You shall not pass!")
     return current_user
