@@ -24,9 +24,14 @@ export function Register() {
         e.preventDefault()
         if (!isEmailValid(email)) {
             setError("Email must be in the 'dspace.hr' domain.");
+            return;
         } else if(!isPasswordValid(password)){
             setError("Password must be at least 6 charachters long, contain at\n"
                 +"least one number and one uppercase letter.");
+            return;
+        } else if(password !== confirmPassword){
+            setError("Password and confirm password need to match!");
+            return;
         } else {
             setError("");
             try {

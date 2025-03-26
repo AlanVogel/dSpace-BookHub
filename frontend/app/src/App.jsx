@@ -1,13 +1,14 @@
 import React from "react";
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import { ToastContainer, Zoom } from "react-toastify";
-import Login from "./components/Auth/Login"
-import Register from "./components/Auth/Register";
+import { Login, Register } from "./components/Auth";
+import Logout from "./components/Auth/Logout";
 import Layout from "./components/shared/Layout";
 import Dashboard from "./components/Dashboard";
-import Logout from "./components/Auth/Logout";
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import BorrowBookDashboard from "./components/BorrowBookDashboard";
+import HelpPage from "./components/HelpPage";
+import Settings from "./components/Settings";
 import { SearchProvider } from "./components/libs/helpers";
 
 
@@ -36,6 +37,8 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="/home/customers" element={<EmployeeDashboard />} />
           <Route path="/home/books" element={<BorrowBookDashboard />} />
+          <Route path="/home/support" element={<HelpPage />} />
+          <Route path="/home/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

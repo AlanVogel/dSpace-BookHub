@@ -21,13 +21,21 @@ class User(BaseModel):
 
 class UserEdit(BaseModel):
     user_name: t.Optional[str]  = None
-    password: t.Optional[str] = None
+    hashed_password: t.Optional[str] = None
     is_superuser: t.Optional[bool] = False
 
     class Config:
         from_attributes = True
 
+class VerifyPassword(BaseModel):
+    email: EmailStr
+    password: str
+
+    class Config:
+        from_attributes = True
+
 class UserInDB(User):
+    id: int
     email: EmailStr
     hashed_password: str
     is_superuser: bool

@@ -11,7 +11,7 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
 from database.schemas.helper.utils import make_dependable
-from database.schemas.user import RegisterUser, UserEdit, UserResponse
+from database.schemas.user import RegisterUser, UserEdit, UserResponse, VerifyPassword
 from database.providers.user import UserProvider
 from .helper.router_msg import (
     error_exception,
@@ -21,7 +21,9 @@ from .helper.utils import (
     authenticate_user, 
     create_access_token,
     get_current_active_superuser,
-    verify_access_token
+    get_current_active_user,
+    verify_access_token,
+    verify_password
 )
 
 load_dotenv()
@@ -29,9 +31,9 @@ router = APIRouter(prefix="/api")
 
 
 @router.post("/signup")
-def signup(response: Response,
-           form_data: RegisterUser, 
-           db = Depends(get_db)):
+async def signup(response: Response,
+                 form_data: RegisterUser, 
+                 db = Depends(get_db)):
     user = UserProvider.get_user_by_email(db = db, 
                                           email= form_data.email["email"])
     if user:
@@ -75,7 +77,7 @@ async def login(response: Response, db = Depends(get_db),
     if not user:
         raise error_exception(
             status_code = status.HTTP_404_NOT_FOUND,
-            details = "Incorret username or password",
+            details = "Incorrect username/password or account doesn't exist!",
             headers = {"WWW-Authenticate":"Bearer"})
     if user.is_superuser:
         permission = "admin"
@@ -98,7 +100,7 @@ async def logout(response: Response):
                        details="Successfully logged out")
 
 @router.get("/user_info")
-def get_user_info(request: Request):
+async def get_user_info(request: Request):
     token = request.cookies.get("access_token")
     if not token:
         return {"error": "Unauthorized"}
@@ -106,24 +108,43 @@ def get_user_info(request: Request):
     try:
         token = token.replace("Bearer ", "")
         payload = verify_access_token(token)
-        return {"permission": payload.get("permission", "unknown")}
+        return {"permission": payload.get("permission", "unknown"),
+                "email": payload.get("sub", "unknown")}
     except Exception as e:
         return {"error": "Invalid token"}
 
-@router.get("/get_user/{user_id}")
-async def user_details(user_id: int, db = Depends(get_db),
-                       current_user = Depends(get_current_active_superuser)):
-    user = UserProvider.get_user_by_id(user_id = user_id, db = db)
+@router.get("/get_user", response_model = dict)
+async def user_details(current_user = Depends(get_current_active_user)):
+    user = {
+        "id": current_user.id,
+        "user_name": current_user.user_name,
+        "email": current_user.email,
+        "password": current_user.hashed_password,
+        "is_active": current_user.is_active,
+        "is_superuser": current_user.is_superuser
+    }
+    return user
+
+@router.post("/verify_password")
+async def verify_user_password(form_data: VerifyPassword, db = Depends(get_db)):
+    user = UserProvider.get_user_by_email(email = form_data.email, db = db)
     if not user:
         raise error_exception(
-            status_code = status.HTTP_404_NOT_FOUND,
-            details = "User doesn't exist",
-            headers = {"WWW-Authenticate":"Bearer"}
+            status_code= status.HTTP_404_NOT_FOUND,
+            details = "Users doesn't exist",
+            headers = {"WWW-Authenticate": "Bearer"}
         )
-    return ok_response(status_code= status.HTTP_200_OK,
-                       details="Returned user",
-                       **{"Returned_user": f"{user}",
-                          "Requested_by": f"{current_user.email}"})
+
+    if verify_password(plain_password = form_data.password, 
+                       hashed_password = user.hashed_password):
+        return ok_response(status_code = 200, 
+                           details = "Password is correct!")
+    else:
+        raise error_exception(
+            status_code= status.HTTP_400_BAD_REQUEST,
+            details = "Incorrect password!",
+            headers = {"WWW-Authenticate": "Bearer"}
+        )
 
 @router.get("/get_users", response_model=list[UserResponse])
 async def get_users(db = Depends(get_db), 
@@ -146,8 +167,17 @@ async def update_used_account(user_id: int, user: UserEdit, db = Depends(get_db)
                        details = "User account has been updated",
                        **{"Updated_user": updated_user.user_name,
                           "Updated_by": current_user.email})
-    
 
+@router.patch("/update_account")
+async def update_own_account(user_id: int, user: UserEdit, db = Depends(get_db),
+                              current_user = Depends(get_current_active_user)):
+    updated_user = UserProvider.update_user_by_id(user_id = user_id, db = db, 
+                                                  user = user)
+    return ok_response(status_code= status.HTTP_200_OK,
+                       details = "User account has been updated",
+                       **{"Updated_user": updated_user.user_name,
+                          "Updated_by": current_user.email})
+    
 @router.delete("/delete_user")
 async def delete_unused_account(user_id: int, db = Depends(get_db),
                                 current_user = Depends(get_current_active_superuser)):

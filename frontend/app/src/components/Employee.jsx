@@ -28,7 +28,7 @@ function Employee( {onEdit, getData} ) {
             const totalAdmins = validUser.filter(u => u.is_superuser).length || 0;
             getData([totalUsers, totalAdmins]);
         }
-        }, [user, getData]);
+    }, [user, getData]);
 
     const filteredUsers = user.filter((user) =>
         user.user_name.toLowerCase().includes(searchQuery.toLowerCase()) ||

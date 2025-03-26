@@ -16,6 +16,24 @@ export const getUserRole = async () => {
     }
 };
 
+export const verifyPassword = async (email, old_password) => {
+    const payload = {
+        email: email,
+        password: old_password
+    };
+    try {
+        const response = await api.post("/verify_password", payload, {
+            headers: {
+            "Content-Type": "application/json",
+            }
+        });
+        return response.data || "";
+    } catch (error) {
+        console.error("Failed to verify password: ", error);
+        return null;
+    }
+};
+
 export const isAuthenticated = () => {
     const permissions = Cookie.get("access_token");
     if(!permissions) {
@@ -82,15 +100,7 @@ export const signup = async (
         toast.success("Signed up successfully!");
         return data;
     } catch (error) {
-        if (error.response) {
-            const errorMsg = error.response.data?.detail || "Signup error";
-            toast.error(errorMsg);
-            console.error("Validation Error Response:", error.response.data);
-            console.error("Status:", error.response.status);
-        } else {
-            toast.error("Request Error: " + error.message);
-            console.error("Request Error:", error.message);
-        }
+        toast.error(error.response.data?.detail, { autoClose: 3000 });
     }
 
 }
@@ -100,13 +110,6 @@ export const logout = async () => {
         const response = await api.post("/logout", {});
         toast.info(response.data.info.data.details);
     } catch (error) {
-        if (error.response) {
-            const errorMsg = error.response.data?.detail || "Logout error";
-            toast.error(errorMsg);
-            console.error("Failed to log out:", error.response.data);
-        } else {
-            toast.error("Request Error: " + error.message);
-            console.error("Failed to log out:", error.message);
-        }
+        toast.error(error.response.data?.detail, { autoClose: 3000 });
     }
 };

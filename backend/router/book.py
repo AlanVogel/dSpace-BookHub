@@ -72,8 +72,8 @@ async def get_book(book_id: int, db = Depends(get_db),
                           "Requested_by": f"{current_user.email}"})
 
 @router.get("/get_books", response_model=list[BookResponse])
-async def get_books(db = Depends(get_db), 
-                   current_user = Depends(get_current_active_user)):
+async def get_books(db = Depends(get_db),
+                    current_user = Depends(get_current_active_user)):
     db_books = BookProvider.get_all_books(db = db)
     if not db_books:
         raise error_exception(status_code = status.HTTP_404_NOT_FOUND,
@@ -82,8 +82,8 @@ async def get_books(db = Depends(get_db),
     return db_books
 
 @router.get("/borrowed_books")
-def get_borrowed_books(db = Depends(get_db),
-                       current_user = Depends(get_current_active_user)):
+async def get_borrowed_books(db = Depends(get_db),
+                             current_user = Depends(get_current_active_user)):
     user = UserProvider.get_user_by_email(email = current_user.email, db = db)
     if not user:
         raise error_exception(status_code = status.HTTP_404_NOT_FOUND,

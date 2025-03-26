@@ -14,7 +14,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup SSH Connection
+      - name: Pull latest changes
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.WINDOWS_SERVER_IP }}

@@ -28,7 +28,8 @@ def get_password_hash(password):
 def get_user(db, email: str):
     user = provider.UserProvider.get_user_by_email(db = db, email = email)
     if user:
-        user_data = {"user_name": user.user_name,
+        user_data = {"id": user.id,
+                     "user_name": user.user_name,
                      "is_active": user.is_active,
                      "email": user.email,
                      "hashed_password": user.hashed_password,

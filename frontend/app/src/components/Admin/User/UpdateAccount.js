@@ -1,8 +1,7 @@
-import Cookie from "js-cookie";
 import { toast } from "react-toastify";
 import api from "../../../utils/api";
 
-export const editUser = async (
+export const updateAccount = async (
     userId,
     user_name,
     password,
@@ -14,24 +13,21 @@ export const editUser = async (
         hashed_password: password,
         is_superuser: is_superuser
     };
-
     try {
-        const token = Cookie.get("access_token");
-        const {data} = await api.patch("/update_user", payload, 
+        const {data} = await api.patch("/update_account", payload, 
         {
             params: {
                 user_id: userId, 
             },
             headers: {
-                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             },
         });
-        toast.success("User successfully updated");
+        toast.success("Account successfully updated");
         return data;
     } catch (error) {
         if (error.response) {
-            const errMsg = error.response.data?.detail || "Editing User Error";
+            const errMsg = error.response.data?.detail || "Updating Account Error";
             toast.error(errMsg);
             console.error("Validation Error Response: ", error.response.data);
             console.error("Status: ", error.response.status);

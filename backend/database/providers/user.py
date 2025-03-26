@@ -46,6 +46,9 @@ class UserProvider:
             update_data = user.model_dump(exclude_unset=True)
             update_data = {key: value for key, value in update_data.items() 
                            if value != ""}
+            if "hashed_password" in update_data:
+                update_data["hashed_password"] = get_password_hash(update_data["hashed_password"])
+
             for key, value in update_data.items():
                   setattr(db_user, key, value)
         
