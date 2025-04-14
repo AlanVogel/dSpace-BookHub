@@ -26,14 +26,7 @@ export const updateAccount = async (
         toast.success("Account successfully updated");
         return data;
     } catch (error) {
-        if (error.response) {
-            const errMsg = error.response.data?.detail || "Updating Account Error";
-            toast.error(errMsg);
-            console.error("Validation Error Response: ", error.response.data);
-            console.error("Status: ", error.response.status);
-        } else {
-            toast.error("Request Error: ", error.message);
-            console.error("Request Error: ", error.message);
-        }
+        toast.error(error.response.data?.detail);
+        throw new Error(error.response?.data?.detail || "Updating Account Error");
     }
 };

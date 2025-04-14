@@ -31,6 +31,8 @@ function Settings() {
   
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError("");
+    
     if (!user || !user.email) {
       setError("User data is not available.");
       return;
@@ -94,21 +96,21 @@ function Settings() {
                          required={true} value={name} onChange={e => setName(e.target.value)}/>
                     </div>
                     <div>
-                        <label htmlFor="old password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Old password</label>
+                        <label htmlFor="old password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Old Password</label>
                         <input type="password" name="old password" className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
                          focus:ring-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600
                          dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                          placeholder="Old password" value={oldPassword} required={true} onChange={e => setOldPassword(e.target.value)}/>
                     </div>
                     <div>
-                        <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
+                        <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">New Password</label>
                         <input type="password" name="password" className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
                          focus:ring-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600
                          dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                          placeholder="Enter your new password" value={password} required={true} onChange={e => setPassword(e.target.value)}/>
                     </div>
                     <div>
-                        <label htmlFor="confirm password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm password</label>
+                        <label htmlFor="confirm password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm Password</label>
                         <input type="password" name="confirm password" className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg
                          focus:ring-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600
                          dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"

@@ -22,6 +22,8 @@ export function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError("");
+        
         if (!isEmailValid(email)) {
             setError("Email must be in the 'dspace.hr' domain.");
             return;

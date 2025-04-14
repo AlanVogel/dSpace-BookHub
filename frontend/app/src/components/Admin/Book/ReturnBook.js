@@ -27,8 +27,7 @@ export const restoreBook = async (
         return data;
     } catch (error) {
         if (error.response) {
-            const errMsg = error.response.data?.detail || "Returning Book Error";
-            toast.error(errMsg);
+            toast.error(error.response.data?.detail || "Returning Book Error");
             console.error("Validation Error Response: ", error.response.data);
             console.error("Status: ", error.response.status);
         } else {

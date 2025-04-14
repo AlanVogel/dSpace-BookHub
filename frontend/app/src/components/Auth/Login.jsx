@@ -1,12 +1,17 @@
-import React, {useState} from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../utils/auth";
+import React, {useState, useEffect} from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { login, isTokenActive } from "../../utils/auth";
 
 export const Login = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [tokenCheck, setTokenCheck] = useState(false);
+
+    useEffect(() => {
+        isTokenActive().then(setTokenCheck);
+    }, []);
 
    const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,7 +32,9 @@ export const Login = () => {
     }
    };
 
-    return (
+    return tokenCheck ? (
+        <Navigate to="/home" />
+    ): (
         <section className="bg-gray-50 dark:bg-gray-900">
             <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
                 <h1 className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">

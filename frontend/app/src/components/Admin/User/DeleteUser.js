@@ -20,13 +20,13 @@ export const deleteUser = async ( User ) => {
         return data;
     } catch (error) {
         if (error.response) {
-            const errMsg = error.response.data?.detail || "Deleting User Error";
-            toast.error(errMsg);
+            toast.error(error.response.data?.detail || "Deleting User Error");
             console.error("Validation Error Response: ", error.response.data);
             console.error("Status: ", error.response.status);
         } else {
             toast.error("Request Error: ", error.message);
             console.error("Request Error:", error.message);
         }
+        return null;
     }
 };

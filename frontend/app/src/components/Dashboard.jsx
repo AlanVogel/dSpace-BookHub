@@ -12,9 +12,9 @@ export default function Dashboard() {
   const [userRole, setUserRole] = useState("");
   const isDisabled = userRole !== "admin";
   
-      useEffect(() => {
-          getUserRole().then(setUserRole);
-      }, []);
+  useEffect(() => {
+    getUserRole().then(setUserRole);
+  }, []);
 
   const handleDataFromBookTable = useCallback((totalBooks, totalBorrowedBooks) => {
     setChildBookData([totalBooks, totalBorrowedBooks]);

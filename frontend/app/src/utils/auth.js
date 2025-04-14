@@ -34,6 +34,23 @@ export const verifyPassword = async (email, old_password) => {
     }
 };
 
+export const isTokenActive = async () => {
+    try {
+        const response = await api.get("/user_info", {
+            headers: {
+                "Content-Type": "application/json",
+            }
+        });
+        if(response.data.email) {
+            return true;
+        }
+        return false;
+    } catch(error) {
+        console.error("Failed to check if token is active: ", error);
+        return "";
+    }
+};
+
 export const isAuthenticated = () => {
     const permissions = Cookie.get("access_token");
     if(!permissions) {
@@ -60,6 +77,7 @@ export const login = async (email, password) => {
         return data;
     } catch (error) {
         toast.error(error.response.data?.detail, { autoClose: 3000 });
+        throw new Error(error.response?.data?.detail || "Login failed");
     }
 };
 
@@ -101,6 +119,7 @@ export const signup = async (
         return data;
     } catch (error) {
         toast.error(error.response.data?.detail, { autoClose: 3000 });
+        throw new Error(error.response?.data?.detail || "Signin failed");
     }
 
 }
