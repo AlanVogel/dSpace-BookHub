@@ -14,6 +14,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Test Port Connectivity
+        run: nc -zv ${{ secrets.WINDOWS_SERVER_IP }} ${{ secrets.PORT}}
+
       - name: Pull latest changes
         uses: appleboy/ssh-action@v0.1.10
         with:
