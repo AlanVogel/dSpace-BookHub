@@ -20,6 +20,12 @@ class UserProvider:
         return db.query(User).filter(User.email == email).first()
     
     @staticmethod
+    def get_email_username_check(email: str, username: str, db: Session):
+        return db.query(User).filter(
+            (User.email == email) | (User.user_name == username)
+        ).first()
+    
+    @staticmethod
     def get_all_users(db:Session):
         users = db.query(User).all()
 

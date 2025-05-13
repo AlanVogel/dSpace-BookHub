@@ -43,9 +43,6 @@ class UserInDB(User):
     class Config:
         from_attributes = True
 
-class UserResponse(UserInDB):
-    id: int
-
 class Login(BaseModel):
     email: EmailStr = Field(pattern=r".+@dspace\.hr$")
     password: str = Field(min_length=6, pattern=r"\d.*[A-Z]|[A-Z].*\d")

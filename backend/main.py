@@ -6,12 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from contextlib import asynccontextmanager
 from router import user, book
-from database.config import db_session, ini_db, drop_db
+from database.config import db_session, init_db, drop_db, database_exists, get_db_url
 from database.seed_data import seed_db_from_excel, create_sudo_user
 
 load_dotenv()
-drop_db()
-ini_db()
+ENVIRONMENT = os.getenv("ENVIRONMENT", "PRODUCTION").upper()
+print(f"enviroment: {ENVIRONMENT}")
+if ENVIRONMENT == "DEVELOPMENT":
+    drop_db()
+    init_db()
+else:
+    if not database_exists(url = get_db_url()):
+        init_db()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -205,6 +205,12 @@ class BookProvider:
         
         db_book_status = db.query(BookCopy).filter(BookCopy.book_id == 
                                                    db_book.id).first()
+        if db_book_status.borrowed_by != user.id or user.is_superuser != True:
+            raise error_exception(
+                status_code = status.HTTP_403_FORBIDDEN,
+                details = "You're not the borrower",
+                headers = {"WWW-Authenticate": "Bearer"}  
+            )
         if db_book_status:
             if not db_book_status.borrowed_by and db_book_status.returned_by:
                 raise error_exception(status_code = status.HTTP_409_CONFLICT,

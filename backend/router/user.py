@@ -11,7 +11,7 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from database.config import get_db
 from database.schemas.helper.utils import make_dependable
-from database.schemas.user import RegisterUser, UserEdit, UserResponse, VerifyPassword
+from database.schemas.user import RegisterUser, UserEdit, UserInDB, VerifyPassword
 from database.providers.user import UserProvider
 from .helper.router_msg import (
     error_exception,
@@ -34,19 +34,22 @@ router = APIRouter(prefix="/api")
 async def signup(response: Response,
                  form_data: RegisterUser, 
                  db = Depends(get_db)):
-    user = UserProvider.get_user_by_email(db = db, 
-                                          email= form_data.email["email"])
+    
+    user = UserProvider.get_email_username_check(
+        email = form_data.email["email"],
+        username = form_data.user_name,
+        db = db
+    )
+
     if user:
-        raise error_exception(
-            status_code = status.HTTP_409_CONFLICT,
-            details = "Account already exist",
-            headers = {"WWW-Authenticate":"Bearer"}
-        )
-    db_name = UserProvider.get_user_by_username(username = form_data.user_name,
-                                                db = db)
-    if db_name:
-        if db_name.user_name == form_data.user_name:
+        if user.email == form_data.email["email"]:
             raise error_exception(
+                status_code = status.HTTP_409_CONFLICT,
+                details = "Account already exist",
+                headers = {"WWW-Authenticate":"Bearer"}
+        )
+        if user.user_name == form_data.user_name:
+             raise error_exception(
                 status_code= status.HTTP_409_CONFLICT,
                 details= "Name already taken",
                 headers= {"WWW-Authenticate":"Bearer"}
@@ -61,9 +64,9 @@ async def signup(response: Response,
     access_token = create_access_token(
         data = {"sub": new_user.email, "permission": permission},
                 expires_delta= access_token_expire)
-    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS in production!!!!
+    secure = os.getenv("ENVIRONMENT") == "production"
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", 
-                        httponly=True, samesite="lax", secure=False)
+                        httponly=True, samesite="lax", secure=secure)
     return ok_response(status_code = status.HTTP_201_CREATED,
                        details = "Account successfully created.",
                        **{"User_info": {"Username": new_user.user_name, 
@@ -87,9 +90,9 @@ async def login(response: Response, db = Depends(get_db),
     access_token = create_access_token(
         data = {"sub": user.email, "permission": permission}, 
                 expires_delta = access_token_expires)
-    #:TODO: secure=True for ensuring the JWT is only sent over HTTPS in the production!!!!
+    secure = os.getenv("ENVIRONMENT") == "production"
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", 
-                        httponly=True, samesite="lax", secure=False)
+                        httponly=True, samesite="lax", secure=secure)
     return ok_response(status_code=status.HTTP_200_OK,
                        details="Login succefully")
 
@@ -131,7 +134,7 @@ async def verify_user_password(form_data: VerifyPassword, db = Depends(get_db)):
     if not user:
         raise error_exception(
             status_code= status.HTTP_404_NOT_FOUND,
-            details = "Users doesn't exist",
+            details = "User does not exist",
             headers = {"WWW-Authenticate": "Bearer"}
         )
 
@@ -146,14 +149,14 @@ async def verify_user_password(form_data: VerifyPassword, db = Depends(get_db)):
             headers = {"WWW-Authenticate": "Bearer"}
         )
 
-@router.get("/get_users", response_model=list[UserResponse])
+@router.get("/get_users", response_model=list[UserInDB])
 async def get_users(db = Depends(get_db), 
                     current_user = Depends(get_current_active_superuser)):
     users = UserProvider.get_all_users(db = db)
     if not users:
         raise error_exception(
             status_code= status.HTTP_404_NOT_FOUND,
-            details = "Users doesn't exist",
+            details = "User does not exist",
             headers = {"WWW-Authenticate": "Bearer"}
         )
     return users
