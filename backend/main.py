@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from router import user, book
 from database.config import db_session, init_db, drop_db, database_exists, get_db_url
 from database.seed_data import seed_db_from_excel, create_sudo_user
+from database.utils import is_database_empty
 
 load_dotenv()
 ENVIRONMENT = os.getenv("ENVIRONMENT", "PRODUCTION").upper()
@@ -21,8 +22,9 @@ else:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    seed_db_from_excel()
-    create_sudo_user()
+    if ENVIRONMENT == "DEVELOPMENT" or is_database_empty():
+        seed_db_from_excel()
+        create_sudo_user()
     yield
 
 app = FastAPI(lifespan=lifespan)
